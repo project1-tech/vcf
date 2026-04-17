@@ -325,6 +325,8 @@ function AdminPage() {
       </Card>
     );
   };
+
+  if (!authed) {
     return (
       <>
         <StarryBg />
@@ -435,6 +437,41 @@ function AdminPage() {
               </Button>
             </div>
           </Card>
+
+          {/* Inboxes */}
+          <div className="flex items-center justify-between gap-3 px-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Inbox className="h-4 w-4" />
+              Visitor messages
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={showHandled}
+                onChange={(e) => setShowHandled(e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary"
+              />
+              Show handled
+            </label>
+          </div>
+
+          {renderInbox(
+            "VCF download requests",
+            <MessageSquare className="h-4 w-4 text-primary" />,
+            "download_request",
+            (m) => {
+              const cn = campaignName(m.campaign_id);
+              return `Hi ${m.name}, here is the VCF${cn ? ` for ${cn}` : ""} you requested. — SYMOH Tech`;
+            },
+          )}
+
+          {renderInbox(
+            "Future VCF subscribers",
+            <Bell className="h-4 w-4 text-primary" />,
+            "feature_request",
+            (m) =>
+              `Hi ${m.name}, a new VCF is ready! Reply if you'd like to receive it. — SYMOH Tech`,
+          )}
 
           {/* Campaigns */}
           <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
