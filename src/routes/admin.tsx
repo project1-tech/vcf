@@ -11,12 +11,25 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   adminDeleteCampaign,
   adminDeleteContact,
+  adminDeleteMessage,
   adminListData,
   adminLogin,
+  adminUpdateMessage,
   adminUpdatePinned,
   adminUpdateTarget,
 } from "@/lib/admin.functions";
-import { Trash2, Pin, Plus, ExternalLink, LogOut, Lock } from "lucide-react";
+import {
+  Trash2,
+  Pin,
+  Plus,
+  ExternalLink,
+  LogOut,
+  Lock,
+  MessageSquare,
+  Bell,
+  Check,
+  Inbox,
+} from "lucide-react";
 
 type Campaign = {
   id: string;
@@ -34,6 +47,16 @@ type Contact = {
   created_at: string;
 };
 type Pinned = { name: string; phone: string };
+type AdminMessage = {
+  id: string;
+  kind: "download_request" | "feature_request";
+  campaign_id: string | null;
+  name: string;
+  phone: string;
+  message: string;
+  handled: boolean;
+  created_at: string;
+};
 
 const STORAGE_KEY = "symoh_admin_pwd";
 
@@ -55,11 +78,15 @@ function AdminPage() {
   const delCampaign = useServerFn(adminDeleteCampaign);
   const upTarget = useServerFn(adminUpdateTarget);
   const upPinned = useServerFn(adminUpdatePinned);
+  const upMessage = useServerFn(adminUpdateMessage);
+  const delMessage = useServerFn(adminDeleteMessage);
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [pinned, setPinned] = useState<Pinned[]>([]);
+  const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [openCampaign, setOpenCampaign] = useState<string | null>(null);
+  const [showHandled, setShowHandled] = useState(false);
 
   const refresh = async (pwd: string) => {
     try {
@@ -67,6 +94,7 @@ function AdminPage() {
       setCampaigns(res.campaigns as Campaign[]);
       setContacts(res.contacts as Contact[]);
       setPinned(res.pinned);
+      setMessages((res.messages ?? []) as AdminMessage[]);
       setAuthed(true);
     } catch (e) {
       toast.error((e as Error).message);
@@ -153,6 +181,149 @@ function AdminPage() {
     } catch (e) {
       toast.error((e as Error).message);
     }
+  };
+
+  const toggleHandled = async (m: AdminMessage) => {
+    try {
+      await upMessage({
+        data: { password, id: m.id, handled: !m.handled },
+      });
+      setMessages((prev) =>
+        prev.map((x) => (x.id === m.id ? { ...x, handled: !m.handled } : x)),
+      );
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const removeMessage = async (id: string) => {
+    if (!confirm("Delete this message?")) return;
+    try {
+      await delMessage({ data: { password, id } });
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+      toast.success("Deleted");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const waLink = (phone: string, body: string) => {
+    const clean = phone.replace(/[^\d+]/g, "").replace(/^\+/, "");
+    return `https://wa.me/${clean}?text=${encodeURIComponent(body)}`;
+  };
+
+  const campaignName = (id: string | null) =>
+    campaigns.find((c) => c.id === id)?.name ?? null;
+
+  const renderInbox = (
+    title: string,
+    icon: React.ReactNode,
+    kind: AdminMessage["kind"],
+    waBodyFor: (m: AdminMessage) => string,
+  ) => {
+    const list = messages
+      .filter((m) => m.kind === kind)
+      .filter((m) => showHandled || !m.handled);
+    const unhandled = messages.filter(
+      (m) => m.kind === kind && !m.handled,
+    ).length;
+    return (
+      <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h2 className="text-lg font-semibold">
+              {title}{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                ({unhandled} new)
+              </span>
+            </h2>
+          </div>
+        </div>
+        {list.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No messages
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {list.map((m) => {
+              const cn = campaignName(m.campaign_id);
+              return (
+                <li
+                  key={m.id}
+                  className={`rounded-lg border p-3 ${
+                    m.handled
+                      ? "border-border/40 bg-background/20 opacity-60"
+                      : "border-primary/30 bg-background/40"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold">{m.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(m.created_at).toLocaleString()}
+                        </span>
+                        {cn && (
+                          <span className="rounded bg-primary/15 px-2 py-0.5 text-[11px] text-primary">
+                            {cn}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-sm">
+                        <a
+                          href={waLink(m.phone, waBodyFor(m))}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline-offset-2 hover:underline"
+                        >
+                          {m.phone}
+                        </a>
+                      </div>
+                      {m.message && (
+                        <p className="mt-2 whitespace-pre-wrap break-words rounded bg-background/40 p-2 text-sm text-muted-foreground">
+                          {m.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <a
+                        href={waLink(m.phone, waBodyFor(m))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-8 items-center gap-1 rounded-md px-3 text-xs font-medium text-primary-foreground"
+                        style={{ backgroundColor: "oklch(0.72 0.18 150)" }}
+                      >
+                        <ExternalLink className="h-3 w-3" /> WhatsApp
+                      </a>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => toggleHandled(m)}
+                        title={m.handled ? "Mark as new" : "Mark handled"}
+                      >
+                        <Check
+                          className={`h-4 w-4 ${
+                            m.handled ? "text-success" : "text-muted-foreground"
+                          }`}
+                        />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeMessage(m.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+    );
   };
 
   if (!authed) {
@@ -266,6 +437,41 @@ function AdminPage() {
               </Button>
             </div>
           </Card>
+
+          {/* Inboxes */}
+          <div className="flex items-center justify-between gap-3 px-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Inbox className="h-4 w-4" />
+              Visitor messages
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={showHandled}
+                onChange={(e) => setShowHandled(e.target.checked)}
+                className="h-3.5 w-3.5 accent-primary"
+              />
+              Show handled
+            </label>
+          </div>
+
+          {renderInbox(
+            "VCF download requests",
+            <MessageSquare className="h-4 w-4 text-primary" />,
+            "download_request",
+            (m) => {
+              const cn = campaignName(m.campaign_id);
+              return `Hi ${m.name}, here is the VCF${cn ? ` for ${cn}` : ""} you requested. — SYMOH Tech`;
+            },
+          )}
+
+          {renderInbox(
+            "Future VCF subscribers",
+            <Bell className="h-4 w-4 text-primary" />,
+            "feature_request",
+            (m) =>
+              `Hi ${m.name}, a new VCF is ready! Reply if you'd like to receive it. — SYMOH Tech`,
+          )}
 
           {/* Campaigns */}
           <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">

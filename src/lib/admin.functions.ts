@@ -23,27 +23,70 @@ export const adminListData = createServerFn({ method: "POST" })
   .inputValidator(z.object({ password: z.string().min(1).max(200) }))
   .handler(async ({ data }) => {
     await checkPassword(data.password);
-    const [{ data: campaigns }, { data: contacts }, { data: settings }] =
-      await Promise.all([
-        supabaseAdmin
-          .from("campaigns")
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabaseAdmin
-          .from("contacts")
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabaseAdmin
-          .from("app_settings")
-          .select("pinned_contacts")
-          .eq("id", 1)
-          .single(),
-      ]);
+    const [
+      { data: campaigns },
+      { data: contacts },
+      { data: settings },
+      { data: messages },
+    ] = await Promise.all([
+      supabaseAdmin
+        .from("campaigns")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("contacts")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("app_settings")
+        .select("pinned_contacts")
+        .eq("id", 1)
+        .single(),
+      supabaseAdmin
+        .from("admin_messages")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(500),
+    ]);
     return {
       campaigns: campaigns ?? [],
       contacts: contacts ?? [],
-      pinned: (settings?.pinned_contacts as { name: string; phone: string }[]) ?? [],
+      pinned:
+        (settings?.pinned_contacts as { name: string; phone: string }[]) ?? [],
+      messages: messages ?? [],
     };
+  });
+
+export const adminUpdateMessage = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      password: z.string().min(1).max(200),
+      id: z.string().uuid(),
+      handled: z.boolean(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await checkPassword(data.password);
+    const { error } = await supabaseAdmin
+      .from("admin_messages")
+      .update({ handled: data.handled })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteMessage = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({ password: z.string().min(1).max(200), id: z.string().uuid() }),
+  )
+  .handler(async ({ data }) => {
+    await checkPassword(data.password);
+    const { error } = await supabaseAdmin
+      .from("admin_messages")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const adminDeleteContact = createServerFn({ method: "POST" })
