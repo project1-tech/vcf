@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_messages: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          handled: boolean
+          id: string
+          kind: string
+          message: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          handled?: boolean
+          id?: string
+          kind: string
+          message?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          handled?: boolean
+          id?: string
+          kind?: string
+          message?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_messages_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           admin_password: string
