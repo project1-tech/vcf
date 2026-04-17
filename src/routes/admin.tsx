@@ -47,6 +47,16 @@ type Contact = {
   created_at: string;
 };
 type Pinned = { name: string; phone: string };
+type AdminMessage = {
+  id: string;
+  kind: "download_request" | "feature_request";
+  campaign_id: string | null;
+  name: string;
+  phone: string;
+  message: string;
+  handled: boolean;
+  created_at: string;
+};
 
 const STORAGE_KEY = "symoh_admin_pwd";
 
