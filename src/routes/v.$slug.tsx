@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { StarryBg } from "@/components/StarryBg";
 import { supabase } from "@/integrations/supabase/client";
 import { buildVcf, downloadVcf, maskPhone, type SimpleContact } from "@/lib/vcf";
+import { submitContact } from "@/lib/contacts.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
