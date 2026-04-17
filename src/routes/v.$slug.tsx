@@ -3,21 +3,27 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { StarryBg } from "@/components/StarryBg";
 import { supabase } from "@/integrations/supabase/client";
 import { buildVcf, downloadVcf, maskPhone, type SimpleContact } from "@/lib/vcf";
 import { submitContact } from "@/lib/contacts.functions";
+import { submitAdminMessage } from "@/lib/messages.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
   AlertTriangle,
+  Bell,
   Download,
   ExternalLink,
   Heart,
+  Lock,
+  MessageSquare,
   Search,
+  Send,
   Target,
   TrendingUp,
   UserPlus,
@@ -58,14 +64,14 @@ export const Route = createFileRoute("/v/$slug")({
             name: "description",
             content:
               loaderData.campaign.description ??
-              "Join this VCF campaign — add your number and download the contact file.",
+              "Join this VCF campaign — add your number and get the contact file when it's ready.",
           },
           { property: "og:title", content: loaderData.campaign.name },
           {
             property: "og:description",
             content:
               loaderData.campaign.description ??
-              "Add your number and get the VCF file.",
+              "Add your number and get the VCF when it's full.",
           },
         ]
       : [],
@@ -92,12 +98,27 @@ export const Route = createFileRoute("/v/$slug")({
 function CampaignPage() {
   const { campaign } = Route.useLoaderData();
   const submitContactFn = useServerFn(submitContact);
+  const submitMessageFn = useServerFn(submitAdminMessage);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [pinned, setPinned] = useState<SimpleContact[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Contact admin (download help)
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpName, setHelpName] = useState("");
+  const [helpPhone, setHelpPhone] = useState("");
+  const [helpMsg, setHelpMsg] = useState("");
+  const [helpSending, setHelpSending] = useState(false);
+
+  // Future VCF feature request
+  const [featOpen, setFeatOpen] = useState(false);
+  const [featName, setFeatName] = useState("");
+  const [featPhone, setFeatPhone] = useState("");
+  const [featMsg, setFeatMsg] = useState("");
+  const [featSending, setFeatSending] = useState(false);
 
   const loadContacts = async () => {
     const { data } = await supabase
@@ -167,7 +188,16 @@ function CampaignPage() {
     }
   };
 
+  const total = contacts.length + pinned.length;
+  const remaining = Math.max(campaign.target - total, 0);
+  const progress = Math.min((total / campaign.target) * 100, 100);
+  const isFull = total >= campaign.target;
+
   const handleDownload = () => {
+    if (!isFull) {
+      toast.error("VCF will be available when the target is reached");
+      return;
+    }
     const all: SimpleContact[] = [
       ...pinned,
       ...contacts.map((c) => ({ name: c.name, phone: c.phone })),
@@ -199,9 +229,71 @@ function CampaignPage() {
     }
   };
 
-  const total = contacts.length + pinned.length;
-  const remaining = Math.max(campaign.target - total, 0);
-  const progress = Math.min((total / campaign.target) * 100, 100);
+  const sendHelp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\+?\d{7,15}$/.test(helpPhone.trim().replace(/\s+/g, ""))) {
+      toast.error("Enter a valid WhatsApp number");
+      return;
+    }
+    if (!helpName.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    setHelpSending(true);
+    try {
+      await submitMessageFn({
+        data: {
+          kind: "download_request",
+          campaign_id: campaign.id,
+          name: helpName.trim().slice(0, 80),
+          phone: helpPhone.trim().replace(/\s+/g, ""),
+          message: helpMsg.trim().slice(0, 500),
+        },
+      });
+      setHelpName("");
+      setHelpPhone("");
+      setHelpMsg("");
+      setHelpOpen(false);
+      toast.success("Message sent — admin will WhatsApp you the VCF.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send");
+    } finally {
+      setHelpSending(false);
+    }
+  };
+
+  const sendFeature = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\+?\d{7,15}$/.test(featPhone.trim().replace(/\s+/g, ""))) {
+      toast.error("Enter a valid WhatsApp number");
+      return;
+    }
+    if (!featName.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    setFeatSending(true);
+    try {
+      await submitMessageFn({
+        data: {
+          kind: "feature_request",
+          campaign_id: campaign.id,
+          name: featName.trim().slice(0, 80),
+          phone: featPhone.trim().replace(/\s+/g, ""),
+          message: featMsg.trim().slice(0, 500),
+        },
+      });
+      setFeatName("");
+      setFeatPhone("");
+      setFeatMsg("");
+      setFeatOpen(false);
+      toast.success("Got it! Admin will reach out on WhatsApp.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send");
+    } finally {
+      setFeatSending(false);
+    }
+  };
 
   const filtered = contacts.filter(
     (c) =>
@@ -272,7 +364,7 @@ function CampaignPage() {
               href={campaign.whatsapp_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-2 rounded-md bg-success px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              className="mt-4 inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
               style={{ backgroundColor: "oklch(0.72 0.18 150)" }}
             >
               Join WhatsApp Group
@@ -327,15 +419,164 @@ function CampaignPage() {
             >
               Share Link
             </Button>
-            <Button
-              size="lg"
-              onClick={handleDownload}
-              className="bg-[image:var(--gradient-primary)] text-primary-foreground shadow-[var(--shadow-glow)]"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download VCF
-            </Button>
+            {isFull ? (
+              <Button
+                size="lg"
+                onClick={handleDownload}
+                className="bg-[image:var(--gradient-primary)] text-primary-foreground shadow-[var(--shadow-glow)]"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download VCF
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setHelpOpen((o) => !o)}
+                className="border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Contact Admin
+              </Button>
+            )}
           </div>
+
+          {/* Locked download notice */}
+          {!isFull && (
+            <Card className="border-border/60 bg-card/60 p-4 text-center backdrop-blur">
+              <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Lock className="h-4 w-4" />
+                VCF unlocks when target is reached ({remaining} to go)
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Can&apos;t wait? Tap <strong>Contact Admin</strong> and
+                we&apos;ll WhatsApp it to you.
+              </p>
+            </Card>
+          )}
+
+          {/* Contact admin form */}
+          {helpOpen && !isFull && (
+            <Card className="border-primary/40 bg-card/60 p-6 backdrop-blur">
+              <div className="mb-4 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                <h2 className="text-base font-semibold">
+                  Ask admin to send you the VCF
+                </h2>
+              </div>
+              <form onSubmit={sendHelp} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="help-name">Your name</Label>
+                  <Input
+                    id="help-name"
+                    value={helpName}
+                    onChange={(e) => setHelpName(e.target.value)}
+                    maxLength={80}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="help-phone">WhatsApp number</Label>
+                  <Input
+                    id="help-phone"
+                    type="tel"
+                    placeholder="+254..."
+                    value={helpPhone}
+                    onChange={(e) => setHelpPhone(e.target.value)}
+                    maxLength={16}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="help-msg">Message (optional)</Label>
+                  <Textarea
+                    id="help-msg"
+                    rows={3}
+                    placeholder="Anything you'd like admin to know..."
+                    value={helpMsg}
+                    onChange={(e) => setHelpMsg(e.target.value)}
+                    maxLength={500}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={helpSending}
+                  className="w-full bg-[image:var(--gradient-primary)] text-primary-foreground"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {helpSending ? "Sending..." : "Send to admin"}
+                </Button>
+              </form>
+            </Card>
+          )}
+
+          {/* Future VCF subscription */}
+          <Card className="border-border/60 bg-card/60 p-5 backdrop-blur">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-primary" />
+                <div>
+                  <h3 className="text-sm font-semibold">
+                    Want to be in future VCFs?
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Tell admin and we&apos;ll WhatsApp you whenever a new VCF is
+                    ready.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setFeatOpen((o) => !o)}
+                className="border-primary/40 text-primary hover:bg-primary/10"
+              >
+                {featOpen ? "Close" : "Notify me"}
+              </Button>
+            </div>
+
+            {featOpen && (
+              <form onSubmit={sendFeature} className="mt-4 space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="feat-name">Your name</Label>
+                  <Input
+                    id="feat-name"
+                    value={featName}
+                    onChange={(e) => setFeatName(e.target.value)}
+                    maxLength={80}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="feat-phone">WhatsApp number</Label>
+                  <Input
+                    id="feat-phone"
+                    type="tel"
+                    placeholder="+254..."
+                    value={featPhone}
+                    onChange={(e) => setFeatPhone(e.target.value)}
+                    maxLength={16}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="feat-msg">Message (optional)</Label>
+                  <Textarea
+                    id="feat-msg"
+                    rows={2}
+                    placeholder="Categories you're interested in, etc."
+                    value={featMsg}
+                    onChange={(e) => setFeatMsg(e.target.value)}
+                    maxLength={500}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={featSending}
+                  className="w-full bg-[image:var(--gradient-primary)] text-primary-foreground"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {featSending ? "Sending..." : "Send to admin"}
+                </Button>
+              </form>
+            )}
+          </Card>
 
           {/* Contacts list */}
           <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
