@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { StarryBg } from "@/components/StarryBg";
 import { supabase } from "@/integrations/supabase/client";
 import { buildVcf, downloadVcf, maskPhone, type SimpleContact } from "@/lib/vcf";
+import { submitContact } from "@/lib/contacts.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
@@ -89,6 +91,7 @@ export const Route = createFileRoute("/v/$slug")({
 
 function CampaignPage() {
   const { campaign } = Route.useLoaderData();
+  const submitContactFn = useServerFn(submitContact);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [pinned, setPinned] = useState<SimpleContact[]>([]);
   const [name, setName] = useState("");
@@ -145,19 +148,23 @@ function CampaignPage() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("contacts").insert({
-      campaign_id: campaign.id,
-      name: trimmedName.slice(0, 80),
-      phone: trimmedPhone,
-    });
-    setSubmitting(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await submitContactFn({
+        data: {
+          campaign_id: campaign.id,
+          name: trimmedName.slice(0, 80),
+          phone: trimmedPhone,
+        },
+      });
+      setName("");
+      setPhone("");
+      toast.success("Added! Don't forget to join the WhatsApp group.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to add contact";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
     }
-    setName("");
-    setPhone("");
-    toast.success("Added! Don't forget to join the WhatsApp group.");
   };
 
   const handleDownload = () => {
