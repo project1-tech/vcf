@@ -78,11 +78,15 @@ function AdminPage() {
   const delCampaign = useServerFn(adminDeleteCampaign);
   const upTarget = useServerFn(adminUpdateTarget);
   const upPinned = useServerFn(adminUpdatePinned);
+  const upMessage = useServerFn(adminUpdateMessage);
+  const delMessage = useServerFn(adminDeleteMessage);
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [pinned, setPinned] = useState<Pinned[]>([]);
+  const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [openCampaign, setOpenCampaign] = useState<string | null>(null);
+  const [showHandled, setShowHandled] = useState(false);
 
   const refresh = async (pwd: string) => {
     try {
@@ -90,6 +94,7 @@ function AdminPage() {
       setCampaigns(res.campaigns as Campaign[]);
       setContacts(res.contacts as Contact[]);
       setPinned(res.pinned);
+      setMessages((res.messages ?? []) as AdminMessage[]);
       setAuthed(true);
     } catch (e) {
       toast.error((e as Error).message);
