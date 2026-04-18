@@ -396,6 +396,57 @@ function CampaignPage() {
             </a>
           </Card>
 
+          {/* Success screen with fallback button (after submitting) */}
+          {joined && (
+            <Card className="border-success/40 bg-success/10 p-5 text-center backdrop-blur">
+              <CheckCircle2 className="mx-auto h-8 w-8 text-success" />
+              <h3 className="mt-2 text-base font-semibold">
+                You're added to the VCF
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                If WhatsApp didn't open automatically, tap the button below to
+                join the wait group.
+              </p>
+              <a
+                href={campaign.whatsapp_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-2 rounded-md bg-[image:var(--gradient-primary)] px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)]"
+              >
+                Join WhatsApp Group
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Card>
+          )}
+
+          {/* Always-included pinned numbers */}
+          {pinned.length > 0 && (
+            <Card className="border-primary/30 bg-primary/5 p-5 backdrop-blur">
+              <div className="mb-3 flex items-center gap-2">
+                <Pin className="h-4 w-4 text-primary" />
+                <h2 className="text-sm font-semibold">
+                  Always included in this VCF
+                </h2>
+              </div>
+              <ul className="space-y-2">
+                {pinned.map((p, i) => (
+                  <li
+                    key={`${p.phone}-${i}`}
+                    className="flex items-center gap-3 rounded-md bg-card/60 px-3 py-2 text-sm"
+                  >
+                    <Phone className="h-4 w-4 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">{p.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {p.phone}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
           {/* Add contact form */}
           <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
             <form onSubmit={handleAdd} className="space-y-4">
