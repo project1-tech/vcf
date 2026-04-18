@@ -330,7 +330,7 @@ function AdminPage() {
     return (
       <>
         <StarryBg />
-        <Toaster theme="dark" position="top-center" />
+        <Toaster theme="light" position="top-center" />
         <div className="flex min-h-screen items-center justify-center px-4">
           <Card className="w-full max-w-sm border-border/60 bg-card/60 p-6 backdrop-blur">
             <div className="mb-4 text-center">
@@ -378,7 +378,7 @@ function AdminPage() {
   return (
     <>
       <StarryBg />
-      <Toaster theme="dark" position="top-center" />
+      <Toaster theme="light" position="top-center" />
       <div className="min-h-screen px-4 py-8">
         <div className="mx-auto max-w-4xl space-y-6">
           <header className="flex flex-wrap items-center justify-between gap-4">

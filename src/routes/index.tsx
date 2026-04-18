@@ -61,7 +61,7 @@ function HomePage() {
   return (
     <>
       <StarryBg />
-      <Toaster theme="dark" position="top-center" />
+      <Toaster theme="light" position="top-center" />
       <div className="min-h-screen px-4 py-10">
         <div className="mx-auto max-w-2xl">
           <header className="mb-10 text-center">
