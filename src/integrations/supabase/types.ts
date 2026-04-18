@@ -141,11 +141,50 @@ export type Database = {
           },
         ]
       }
+      page_views: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          day: string
+          id: string
+          ip_hash: string
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          day?: string
+          id?: string
+          ip_hash: string
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          day?: string
+          id?: string
+          ip_hash?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_views_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_campaign_analytics: {
+        Args: { _campaign_id: string; _days?: number }
+        Returns: Json
+      }
       get_pinned_contacts: { Args: never; Returns: Json }
     }
     Enums: {

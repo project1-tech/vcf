@@ -18,6 +18,7 @@ import {
   adminUpdatePinned,
   adminUpdateTarget,
 } from "@/lib/admin.functions";
+import { CampaignAnalytics } from "@/components/CampaignAnalytics";
 import {
   Trash2,
   Pin,
@@ -330,7 +331,7 @@ function AdminPage() {
     return (
       <>
         <StarryBg />
-        <Toaster theme="dark" position="top-center" />
+        <Toaster theme="light" position="top-center" />
         <div className="flex min-h-screen items-center justify-center px-4">
           <Card className="w-full max-w-sm border-border/60 bg-card/60 p-6 backdrop-blur">
             <div className="mb-4 text-center">
@@ -359,9 +360,7 @@ function AdminPage() {
                 {loading ? "Checking..." : "Login"}
               </Button>
               <p className="text-center text-[11px] text-muted-foreground">
-                Default password:{" "}
-                <code className="text-primary">admin123</code> — change it in
-                the database.
+                Contact site owner for the password.
               </p>
             </form>
             <div className="mt-4 text-center">
@@ -378,7 +377,7 @@ function AdminPage() {
   return (
     <>
       <StarryBg />
-      <Toaster theme="dark" position="top-center" />
+      <Toaster theme="light" position="top-center" />
       <div className="min-h-screen px-4 py-8">
         <div className="mx-auto max-w-4xl space-y-6">
           <header className="flex flex-wrap items-center justify-between gap-4">
@@ -545,6 +544,13 @@ function AdminPage() {
 
                       {isOpen && (
                         <div className="mt-4 border-t border-border/60 pt-3">
+                          <CampaignAnalytics
+                            campaignId={c.id}
+                            password={password}
+                          />
+                          <h4 className="mb-2 mt-4 text-sm font-semibold">
+                            Contacts ({cContacts.length})
+                          </h4>
                           {cContacts.length === 0 ? (
                             <p className="text-xs text-muted-foreground">
                               No contacts
