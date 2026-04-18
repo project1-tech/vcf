@@ -322,7 +322,7 @@ function CampaignPage() {
   return (
     <>
       <StarryBg />
-      <Toaster theme="dark" position="top-center" />
+      <Toaster theme="light" position="top-center" />
       <div className="min-h-screen px-4 py-8 md:py-12">
         <div className="mx-auto max-w-2xl space-y-6">
           {/* Header */}
@@ -348,7 +348,13 @@ function CampaignPage() {
             </Card>
             <Card className="border-border/60 bg-card/60 p-4 text-center backdrop-blur">
               <TrendingUp className="mx-auto h-5 w-5 text-info" />
-              <div className="mt-1 text-xs text-muted-foreground">Uploaded</div>
+              <div className="mt-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                Uploaded
+                <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-medium text-success">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+                  LIVE
+                </span>
+              </div>
               <div className="mt-1 text-2xl font-bold text-info">{total}</div>
             </Card>
             <Card className="border-border/60 bg-card/60 p-4 text-center backdrop-blur">
