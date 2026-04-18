@@ -11,17 +11,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildVcf, downloadVcf, maskPhone, type SimpleContact } from "@/lib/vcf";
 import { submitContact } from "@/lib/contacts.functions";
 import { submitAdminMessage } from "@/lib/messages.functions";
+import { recordPageView } from "@/lib/analytics.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import {
   AlertTriangle,
   Bell,
+  CheckCircle2,
   Download,
   ExternalLink,
   Heart,
   Lock,
   MessageSquare,
+  Phone,
+  Pin,
   Search,
   Send,
   Target,
@@ -99,12 +103,14 @@ function CampaignPage() {
   const { campaign } = Route.useLoaderData();
   const submitContactFn = useServerFn(submitContact);
   const submitMessageFn = useServerFn(submitAdminMessage);
+  const recordView = useServerFn(recordPageView);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [pinned, setPinned] = useState<SimpleContact[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [joined, setJoined] = useState(false);
 
   // Contact admin (download help)
   const [helpOpen, setHelpOpen] = useState(false);
@@ -137,6 +143,8 @@ function CampaignPage() {
   useEffect(() => {
     loadContacts();
     loadPinned();
+    // Fire-and-forget page view (unique per IP/day server-side)
+    recordView({ data: { campaign_id: campaign.id } }).catch(() => {});
     const channel = supabase
       .channel(`contacts-${campaign.id}`)
       .on(
@@ -179,7 +187,17 @@ function CampaignPage() {
       });
       setName("");
       setPhone("");
-      toast.success("Added! Don't forget to join the WhatsApp group.");
+      setJoined(true);
+      toast.success("Added! Opening WhatsApp group…");
+      // Auto-redirect to the WhatsApp group. If popup-blocked, the success
+      // screen below shows a fallback button.
+      setTimeout(() => {
+        try {
+          window.open(campaign.whatsapp_link, "_blank", "noopener,noreferrer");
+        } catch {
+          /* ignore */
+        }
+      }, 600);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to add contact";
       toast.error(msg);
