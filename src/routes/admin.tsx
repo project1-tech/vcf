@@ -360,9 +360,7 @@ function AdminPage() {
                 {loading ? "Checking..." : "Login"}
               </Button>
               <p className="text-center text-[11px] text-muted-foreground">
-                Default password:{" "}
-                <code className="text-primary">admin123</code> — change it in
-                the database.
+                Contact site owner for the password.
               </p>
             </form>
             <div className="mt-4 text-center">
