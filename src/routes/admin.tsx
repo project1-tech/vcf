@@ -18,6 +18,7 @@ import {
   adminUpdatePinned,
   adminUpdateTarget,
 } from "@/lib/admin.functions";
+import { CampaignAnalytics } from "@/components/CampaignAnalytics";
 import {
   Trash2,
   Pin,
@@ -545,6 +546,13 @@ function AdminPage() {
 
                       {isOpen && (
                         <div className="mt-4 border-t border-border/60 pt-3">
+                          <CampaignAnalytics
+                            campaignId={c.id}
+                            password={password}
+                          />
+                          <h4 className="mb-2 mt-4 text-sm font-semibold">
+                            Contacts ({cContacts.length})
+                          </h4>
                           {cContacts.length === 0 ? (
                             <p className="text-xs text-muted-foreground">
                               No contacts
