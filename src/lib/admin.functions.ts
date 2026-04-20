@@ -189,7 +189,7 @@ export const adminUpdateAnnouncement = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await checkPassword(data.password);
-    const patch: Record<string, unknown> = {};
+    const patch: { active?: boolean; expires_at?: string | null } = {};
     if (typeof data.active === "boolean") patch.active = data.active;
     if (data.expires_at !== undefined) patch.expires_at = data.expires_at;
     const { error } = await supabaseAdmin
