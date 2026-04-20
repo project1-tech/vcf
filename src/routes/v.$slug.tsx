@@ -172,8 +172,8 @@ function CampaignPage() {
       toast.error("Name and phone are required");
       return;
     }
-    if (!/^\+?\d{7,15}$/.test(trimmedPhone)) {
-      toast.error("Enter a valid phone number");
+    if (!/^\+\d{7,15}$/.test(trimmedPhone)) {
+      toast.error("Phone must start with + and country code (e.g. +254...)");
       return;
     }
     setSubmitting(true);
@@ -249,8 +249,8 @@ function CampaignPage() {
 
   const sendHelp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\+?\d{7,15}$/.test(helpPhone.trim().replace(/\s+/g, ""))) {
-      toast.error("Enter a valid WhatsApp number");
+    if (!/^\+\d{7,15}$/.test(helpPhone.trim().replace(/\s+/g, ""))) {
+      toast.error("WhatsApp number must start with + and country code");
       return;
     }
     if (!helpName.trim()) {
@@ -282,8 +282,8 @@ function CampaignPage() {
 
   const sendFeature = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\+?\d{7,15}$/.test(featPhone.trim().replace(/\s+/g, ""))) {
-      toast.error("Enter a valid WhatsApp number");
+    if (!/^\+\d{7,15}$/.test(featPhone.trim().replace(/\s+/g, ""))) {
+      toast.error("WhatsApp number must start with + and country code");
       return;
     }
     if (!featName.trim()) {
