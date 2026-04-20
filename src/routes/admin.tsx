@@ -117,6 +117,15 @@ function AdminPage() {
   const [annExpires, setAnnExpires] = useState(""); // datetime-local
   const [annSaving, setAnnSaving] = useState(false);
 
+  const loadAnnouncements = async (pwd: string) => {
+    try {
+      const r = await listAnnouncementsFn({ data: { password: pwd } });
+      setAnnouncements(r.announcements as Announcement[]);
+    } catch {
+      /* silent */
+    }
+  };
+
   const refresh = async (pwd: string) => {
     try {
       const res = await listData({ data: { password: pwd } });
@@ -125,10 +134,68 @@ function AdminPage() {
       setPinned(res.pinned);
       setMessages((res.messages ?? []) as AdminMessage[]);
       setAuthed(true);
+      await loadAnnouncements(pwd);
     } catch (e) {
       toast.error((e as Error).message);
       sessionStorage.removeItem(STORAGE_KEY);
       setAuthed(false);
+    }
+  };
+
+  const submitAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!annMsg.trim()) {
+      toast.error("Message is required");
+      return;
+    }
+    setAnnSaving(true);
+    try {
+      await createAnnouncementFn({
+        data: {
+          password,
+          message: annMsg.trim(),
+          link_url: annUrl.trim() || undefined,
+          link_label: annLabel.trim() || undefined,
+          expires_at: annExpires
+            ? new Date(annExpires).toISOString()
+            : null,
+          active: true,
+        },
+      });
+      setAnnMsg("");
+      setAnnUrl("");
+      setAnnLabel("");
+      setAnnExpires("");
+      await loadAnnouncements(password);
+      toast.success("Announcement published");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setAnnSaving(false);
+    }
+  };
+
+  const toggleAnnouncement = async (a: Announcement) => {
+    try {
+      await updateAnnouncementFn({
+        data: { password, id: a.id, active: !a.active },
+      });
+      setAnnouncements((prev) =>
+        prev.map((x) => (x.id === a.id ? { ...x, active: !a.active } : x)),
+      );
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const removeAnnouncement = async (id: string) => {
+    if (!confirm("Delete this announcement?")) return;
+    try {
+      await deleteAnnouncementFn({ data: { password, id } });
+      setAnnouncements((prev) => prev.filter((x) => x.id !== id));
+      toast.success("Deleted");
+    } catch (err) {
+      toast.error((err as Error).message);
     }
   };
 
