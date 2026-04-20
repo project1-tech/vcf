@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { StarryBg } from "@/components/StarryBg";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildVcf, downloadVcf, maskPhone, type SimpleContact } from "@/lib/vcf";
 import { submitContact } from "@/lib/contacts.functions";
@@ -322,6 +323,7 @@ function CampaignPage() {
   return (
     <>
       <StarryBg />
+      <AnnouncementBanner />
       <Toaster theme="light" position="top-center" />
       <div className="min-h-screen px-4 py-8 md:py-12">
         <div className="mx-auto max-w-2xl space-y-6">
@@ -461,11 +463,16 @@ function CampaignPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact-phone">Phone Number</Label>
+                <Label htmlFor="contact-phone">
+                  Phone Number{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (must include country code, e.g. +254...)
+                  </span>
+                </Label>
                 <Input
                   id="contact-phone"
                   type="tel"
-                  placeholder="+254..."
+                  placeholder="+254712345678"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   maxLength={16}
