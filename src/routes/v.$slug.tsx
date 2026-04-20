@@ -595,13 +595,14 @@ function CampaignPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
-                <div>
+              <div>
                   <h3 className="text-sm font-semibold">
-                    Want to be in future VCFs?
+                    Want your number in EVERY future VCF?
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Tell admin and we&apos;ll WhatsApp you whenever a new VCF is
-                    ready.
+                    Contact admin and we&apos;ll include your number in every
+                    VCF we create. We&apos;ll also WhatsApp you when each new
+                    VCF is ready.
                   </p>
                 </div>
               </div>
