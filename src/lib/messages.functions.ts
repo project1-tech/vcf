@@ -49,7 +49,7 @@ export const submitAdminMessage = createServerFn({ method: "POST" })
       phone: z
         .string()
         .trim()
-        .regex(/^\+?\d{7,15}$/, "Enter a valid phone number"),
+        .regex(/^\+\d{7,15}$/, "Phone must start with + and country code (e.g. +254...)"),
       message: z.string().trim().max(500).optional().default(""),
     }),
   )
