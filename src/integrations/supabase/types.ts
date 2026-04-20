@@ -55,6 +55,39 @@ export type Database = {
           },
         ]
       }
+      announcements: {
+        Row: {
+          active: boolean
+          created_at: string
+          expires_at: string | null
+          id: string
+          link_label: string | null
+          link_url: string | null
+          message: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          link_label?: string | null
+          link_url?: string | null
+          message: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          link_label?: string | null
+          link_url?: string | null
+          message?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           admin_password: string

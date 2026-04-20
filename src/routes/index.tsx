@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { StarryBg } from "@/components/StarryBg";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { makeSlug } from "@/lib/vcf";
 import { toast } from "sonner";
@@ -61,6 +62,7 @@ function HomePage() {
   return (
     <>
       <StarryBg />
+      <AnnouncementBanner />
       <Toaster theme="light" position="top-center" />
       <div className="min-h-screen px-4 py-10">
         <div className="mx-auto max-w-2xl">

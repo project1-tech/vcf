@@ -135,6 +135,85 @@ export const adminUpdateTarget = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ===== Announcements =====
+export const adminListAnnouncements = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ password: z.string().min(1).max(200) }))
+  .handler(async ({ data }) => {
+    await checkPassword(data.password);
+    const { data: rows, error } = await supabaseAdmin
+      .from("announcements")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { announcements: rows ?? [] };
+  });
+
+export const adminCreateAnnouncement = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      password: z.string().min(1).max(200),
+      message: z.string().trim().min(1).max(500),
+      link_url: z
+        .string()
+        .trim()
+        .regex(/^https?:\/\//, "Link must start with http(s)://")
+        .max(500)
+        .optional()
+        .or(z.literal("")),
+      link_label: z.string().trim().max(40).optional().or(z.literal("")),
+      expires_at: z.string().datetime().nullable().optional(),
+      active: z.boolean().default(true),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await checkPassword(data.password);
+    const { error } = await supabaseAdmin.from("announcements").insert({
+      message: data.message,
+      link_url: data.link_url ? data.link_url : null,
+      link_label: data.link_label ? data.link_label : null,
+      expires_at: data.expires_at ?? null,
+      active: data.active,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminUpdateAnnouncement = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      password: z.string().min(1).max(200),
+      id: z.string().uuid(),
+      active: z.boolean().optional(),
+      expires_at: z.string().datetime().nullable().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await checkPassword(data.password);
+    const patch: { active?: boolean; expires_at?: string | null } = {};
+    if (typeof data.active === "boolean") patch.active = data.active;
+    if (data.expires_at !== undefined) patch.expires_at = data.expires_at;
+    const { error } = await supabaseAdmin
+      .from("announcements")
+      .update(patch)
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteAnnouncement = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({ password: z.string().min(1).max(200), id: z.string().uuid() }),
+  )
+  .handler(async ({ data }) => {
+    await checkPassword(data.password);
+    const { error } = await supabaseAdmin
+      .from("announcements")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const adminUpdatePinned = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({

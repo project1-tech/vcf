@@ -9,11 +9,15 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  adminCreateAnnouncement,
+  adminDeleteAnnouncement,
   adminDeleteCampaign,
   adminDeleteContact,
   adminDeleteMessage,
+  adminListAnnouncements,
   adminListData,
   adminLogin,
+  adminUpdateAnnouncement,
   adminUpdateMessage,
   adminUpdatePinned,
   adminUpdateTarget,
@@ -30,6 +34,8 @@ import {
   Bell,
   Check,
   Inbox,
+  Megaphone,
+  Power,
 } from "lucide-react";
 
 type Campaign = {
@@ -59,6 +65,16 @@ type AdminMessage = {
   created_at: string;
 };
 
+type Announcement = {
+  id: string;
+  message: string;
+  link_url: string | null;
+  link_label: string | null;
+  active: boolean;
+  expires_at: string | null;
+  created_at: string;
+};
+
 const STORAGE_KEY = "symoh_admin_pwd";
 
 export const Route = createFileRoute("/admin")({
@@ -81,13 +97,34 @@ function AdminPage() {
   const upPinned = useServerFn(adminUpdatePinned);
   const upMessage = useServerFn(adminUpdateMessage);
   const delMessage = useServerFn(adminDeleteMessage);
+  const listAnnouncementsFn = useServerFn(adminListAnnouncements);
+  const createAnnouncementFn = useServerFn(adminCreateAnnouncement);
+  const updateAnnouncementFn = useServerFn(adminUpdateAnnouncement);
+  const deleteAnnouncementFn = useServerFn(adminDeleteAnnouncement);
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [pinned, setPinned] = useState<Pinned[]>([]);
   const [messages, setMessages] = useState<AdminMessage[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [openCampaign, setOpenCampaign] = useState<string | null>(null);
   const [showHandled, setShowHandled] = useState(false);
+
+  // New announcement form
+  const [annMsg, setAnnMsg] = useState("");
+  const [annUrl, setAnnUrl] = useState("");
+  const [annLabel, setAnnLabel] = useState("");
+  const [annExpires, setAnnExpires] = useState(""); // datetime-local
+  const [annSaving, setAnnSaving] = useState(false);
+
+  const loadAnnouncements = async (pwd: string) => {
+    try {
+      const r = await listAnnouncementsFn({ data: { password: pwd } });
+      setAnnouncements(r.announcements as Announcement[]);
+    } catch {
+      /* silent */
+    }
+  };
 
   const refresh = async (pwd: string) => {
     try {
@@ -97,10 +134,68 @@ function AdminPage() {
       setPinned(res.pinned);
       setMessages((res.messages ?? []) as AdminMessage[]);
       setAuthed(true);
+      await loadAnnouncements(pwd);
     } catch (e) {
       toast.error((e as Error).message);
       sessionStorage.removeItem(STORAGE_KEY);
       setAuthed(false);
+    }
+  };
+
+  const submitAnnouncement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!annMsg.trim()) {
+      toast.error("Message is required");
+      return;
+    }
+    setAnnSaving(true);
+    try {
+      await createAnnouncementFn({
+        data: {
+          password,
+          message: annMsg.trim(),
+          link_url: annUrl.trim() || undefined,
+          link_label: annLabel.trim() || undefined,
+          expires_at: annExpires
+            ? new Date(annExpires).toISOString()
+            : null,
+          active: true,
+        },
+      });
+      setAnnMsg("");
+      setAnnUrl("");
+      setAnnLabel("");
+      setAnnExpires("");
+      await loadAnnouncements(password);
+      toast.success("Announcement published");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setAnnSaving(false);
+    }
+  };
+
+  const toggleAnnouncement = async (a: Announcement) => {
+    try {
+      await updateAnnouncementFn({
+        data: { password, id: a.id, active: !a.active },
+      });
+      setAnnouncements((prev) =>
+        prev.map((x) => (x.id === a.id ? { ...x, active: !a.active } : x)),
+      );
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const removeAnnouncement = async (id: string) => {
+    if (!confirm("Delete this announcement?")) return;
+    try {
+      await deleteAnnouncementFn({ data: { password, id } });
+      setAnnouncements((prev) => prev.filter((x) => x.id !== id));
+      toast.success("Deleted");
+    } catch (err) {
+      toast.error((err as Error).message);
     }
   };
 
@@ -391,6 +486,156 @@ function AdminPage() {
               <LogOut className="mr-2 h-3 w-3" /> Logout
             </Button>
           </header>
+
+          {/* Announcements */}
+          <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
+            <div className="mb-4 flex items-center gap-2">
+              <Megaphone className="h-4 w-4 text-primary" />
+              <h2 className="text-lg font-semibold">
+                Site banner announcements
+              </h2>
+            </div>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Active banners pop up at the top of every page (home and VCF
+              pages). Set an expiry to auto-hide.
+            </p>
+
+            <form
+              onSubmit={submitAnnouncement}
+              className="space-y-3 rounded-lg border border-border/60 bg-background/30 p-4"
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="ann-msg">Message</Label>
+                <Input
+                  id="ann-msg"
+                  placeholder="e.g. New VCF dropping Friday — join now!"
+                  value={annMsg}
+                  onChange={(e) => setAnnMsg(e.target.value)}
+                  maxLength={500}
+                />
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ann-url">Link URL (optional)</Label>
+                  <Input
+                    id="ann-url"
+                    type="url"
+                    placeholder="https://..."
+                    value={annUrl}
+                    onChange={(e) => setAnnUrl(e.target.value)}
+                    maxLength={500}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ann-label">Link label</Label>
+                  <Input
+                    id="ann-label"
+                    placeholder="e.g. Join group"
+                    value={annLabel}
+                    onChange={(e) => setAnnLabel(e.target.value)}
+                    maxLength={40}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ann-exp">Stop showing at (optional)</Label>
+                <Input
+                  id="ann-exp"
+                  type="datetime-local"
+                  value={annExpires}
+                  onChange={(e) => setAnnExpires(e.target.value)}
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={annSaving}
+                className="bg-[image:var(--gradient-primary)] text-primary-foreground"
+                size="sm"
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                {annSaving ? "Publishing..." : "Publish banner"}
+              </Button>
+            </form>
+
+            {announcements.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {announcements.map((a) => {
+                  const expired =
+                    a.expires_at && new Date(a.expires_at) <= new Date();
+                  return (
+                    <li
+                      key={a.id}
+                      className={`flex flex-wrap items-start justify-between gap-2 rounded-lg border p-3 text-sm ${
+                        a.active && !expired
+                          ? "border-primary/30 bg-primary/5"
+                          : "border-border/40 bg-background/20 opacity-70"
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                              a.active && !expired
+                                ? "bg-success/20 text-success"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {expired
+                              ? "Expired"
+                              : a.active
+                                ? "Live"
+                                : "Off"}
+                          </span>
+                          {a.expires_at && (
+                            <span className="text-[11px] text-muted-foreground">
+                              until {new Date(a.expires_at).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 break-words font-medium">
+                          {a.message}
+                        </p>
+                        {a.link_url && (
+                          <a
+                            href={a.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                          >
+                            {a.link_label || a.link_url}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => toggleAnnouncement(a)}
+                          title={a.active ? "Turn off" : "Turn on"}
+                        >
+                          <Power
+                            className={`h-4 w-4 ${
+                              a.active
+                                ? "text-success"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeAnnouncement(a.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
 
           {/* Pinned */}
           <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">

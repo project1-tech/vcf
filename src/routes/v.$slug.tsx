@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { StarryBg } from "@/components/StarryBg";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildVcf, downloadVcf, maskPhone, type SimpleContact } from "@/lib/vcf";
 import { submitContact } from "@/lib/contacts.functions";
@@ -172,8 +173,8 @@ function CampaignPage() {
       toast.error("Name and phone are required");
       return;
     }
-    if (!/^\+?\d{7,15}$/.test(trimmedPhone)) {
-      toast.error("Enter a valid phone number");
+    if (!/^\+\d{7,15}$/.test(trimmedPhone)) {
+      toast.error("Phone must start with + and country code (e.g. +254...)");
       return;
     }
     setSubmitting(true);
@@ -249,8 +250,8 @@ function CampaignPage() {
 
   const sendHelp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\+?\d{7,15}$/.test(helpPhone.trim().replace(/\s+/g, ""))) {
-      toast.error("Enter a valid WhatsApp number");
+    if (!/^\+\d{7,15}$/.test(helpPhone.trim().replace(/\s+/g, ""))) {
+      toast.error("WhatsApp number must start with + and country code");
       return;
     }
     if (!helpName.trim()) {
@@ -282,8 +283,8 @@ function CampaignPage() {
 
   const sendFeature = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\+?\d{7,15}$/.test(featPhone.trim().replace(/\s+/g, ""))) {
-      toast.error("Enter a valid WhatsApp number");
+    if (!/^\+\d{7,15}$/.test(featPhone.trim().replace(/\s+/g, ""))) {
+      toast.error("WhatsApp number must start with + and country code");
       return;
     }
     if (!featName.trim()) {
@@ -322,6 +323,7 @@ function CampaignPage() {
   return (
     <>
       <StarryBg />
+      <AnnouncementBanner />
       <Toaster theme="light" position="top-center" />
       <div className="min-h-screen px-4 py-8 md:py-12">
         <div className="mx-auto max-w-2xl space-y-6">
@@ -461,11 +463,16 @@ function CampaignPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contact-phone">Phone Number</Label>
+                <Label htmlFor="contact-phone">
+                  Phone Number{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (must include country code, e.g. +254...)
+                  </span>
+                </Label>
                 <Input
                   id="contact-phone"
                   type="tel"
-                  placeholder="+254..."
+                  placeholder="+254712345678"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   maxLength={16}
@@ -588,13 +595,14 @@ function CampaignPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-primary" />
-                <div>
+              <div>
                   <h3 className="text-sm font-semibold">
-                    Want to be in future VCFs?
+                    Want your number in EVERY future VCF?
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Tell admin and we&apos;ll WhatsApp you whenever a new VCF is
-                    ready.
+                    Contact admin and we&apos;ll include your number in every
+                    VCF we create. We&apos;ll also WhatsApp you when each new
+                    VCF is ready.
                   </p>
                 </div>
               </div>
