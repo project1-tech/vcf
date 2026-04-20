@@ -65,6 +65,16 @@ type AdminMessage = {
   created_at: string;
 };
 
+type Announcement = {
+  id: string;
+  message: string;
+  link_url: string | null;
+  link_label: string | null;
+  active: boolean;
+  expires_at: string | null;
+  created_at: string;
+};
+
 const STORAGE_KEY = "symoh_admin_pwd";
 
 export const Route = createFileRoute("/admin")({
@@ -87,13 +97,25 @@ function AdminPage() {
   const upPinned = useServerFn(adminUpdatePinned);
   const upMessage = useServerFn(adminUpdateMessage);
   const delMessage = useServerFn(adminDeleteMessage);
+  const listAnnouncementsFn = useServerFn(adminListAnnouncements);
+  const createAnnouncementFn = useServerFn(adminCreateAnnouncement);
+  const updateAnnouncementFn = useServerFn(adminUpdateAnnouncement);
+  const deleteAnnouncementFn = useServerFn(adminDeleteAnnouncement);
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [pinned, setPinned] = useState<Pinned[]>([]);
   const [messages, setMessages] = useState<AdminMessage[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [openCampaign, setOpenCampaign] = useState<string | null>(null);
   const [showHandled, setShowHandled] = useState(false);
+
+  // New announcement form
+  const [annMsg, setAnnMsg] = useState("");
+  const [annUrl, setAnnUrl] = useState("");
+  const [annLabel, setAnnLabel] = useState("");
+  const [annExpires, setAnnExpires] = useState(""); // datetime-local
+  const [annSaving, setAnnSaving] = useState(false);
 
   const refresh = async (pwd: string) => {
     try {
