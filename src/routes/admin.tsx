@@ -262,6 +262,34 @@ function AdminPage() {
     toast.success("Target updated");
   };
 
+  const saveWhatsapp = async (c: Campaign, value: string) => {
+    const v = value.trim();
+    if (!/^https?:\/\//.test(v)) {
+      toast.error("Link must start with http:// or https://");
+      return;
+    }
+    try {
+      await upWhatsapp({ data: { password, id: c.id, whatsapp_link: v } });
+      setCampaigns((prev) =>
+        prev.map((x) => (x.id === c.id ? { ...x, whatsapp_link: v } : x)),
+      );
+      toast.success("WhatsApp link updated");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const copyDownloadLink = async (slug: string) => {
+    const url = `${window.location.origin}/d/${slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Download link copied");
+    } catch {
+      toast.error("Copy failed — link: " + url);
+    }
+  };
+
+
   const updatePin = (i: number, key: "name" | "phone", value: string) => {
     setPinned((prev) =>
       prev.map((p, idx) => (idx === i ? { ...p, [key]: value } : p)),
