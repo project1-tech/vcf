@@ -53,7 +53,9 @@ type Campaign = {
   description: string | null;
   whatsapp_link: string;
   target: number;
+  download_expires_at: string | null;
 };
+
 type Contact = {
   id: string;
   campaign_id: string;
