@@ -295,6 +295,26 @@ function AdminPage() {
     }
   };
 
+  const saveDownloadExpiry = async (c: Campaign, value: string) => {
+    // value is from a datetime-local input (or "" to clear)
+    const iso = value ? new Date(value).toISOString() : null;
+    try {
+      await upDownloadExpiry({
+        data: { password, id: c.id, download_expires_at: iso },
+      });
+      setCampaigns((prev) =>
+        prev.map((x) =>
+          x.id === c.id ? { ...x, download_expires_at: iso } : x,
+        ),
+      );
+      toast.success(iso ? "Expiry updated" : "Expiry cleared");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+
+
 
   const updatePin = (i: number, key: "name" | "phone", value: string) => {
     setPinned((prev) =>
