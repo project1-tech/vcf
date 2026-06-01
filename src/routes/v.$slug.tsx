@@ -449,217 +449,235 @@ function CampaignPage() {
             </Card>
           )}
 
-          {/* Add contact form */}
-          <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
-            <form onSubmit={handleAdd} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="contact-name">Name</Label>
-                <Input
-                  id="contact-name"
-                  placeholder="Enter full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={80}
-                />
+          {isFull ? (
+            <Card className="border-success/50 bg-success/10 p-6 text-center backdrop-blur animate-fade-in">
+              <div className="inline-flex items-center gap-2 rounded-full bg-success/20 px-3 py-1 text-xs font-bold uppercase text-success">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-success" />
+                VCF is full
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact-phone">
-                  Phone Number{" "}
-                  <span className="text-xs text-muted-foreground">
-                    (must include country code, e.g. +254...)
-                  </span>
-                </Label>
-                <Input
-                  id="contact-phone"
-                  type="tel"
-                  placeholder="+254712345678"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  maxLength={16}
-                />
-              </div>
-              <Button
-                type="submit"
-                size="lg"
-                disabled={submitting}
-                className="w-full font-semibold text-primary-foreground"
-                style={{ backgroundColor: "oklch(0.72 0.18 150)" }}
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                {submitting ? "Adding..." : "Add to VCF"}
-              </Button>
-            </form>
-          </Card>
-
-          {/* Actions */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={handleShare}
-              className="border-primary/40 text-primary hover:bg-primary/10"
-            >
-              Share Link
-            </Button>
-            {isFull ? (
-              <Button
-                size="lg"
+              <h2 className="mt-4 text-xl font-extrabold leading-tight md:text-2xl">
+                THE VCF IS FULL — IF YOU SUBMITTED YOUR CONTACTS,
+                <br />
+                DOWNLOAD IT HERE 👇👇
+              </h2>
+              <button
+                type="button"
                 onClick={handleDownload}
-                className="bg-[image:var(--gradient-primary)] text-primary-foreground shadow-[var(--shadow-glow)]"
+                className="group relative mt-6 inline-flex animate-bounce items-center gap-3 rounded-full bg-[image:var(--gradient-primary)] px-8 py-4 text-base font-bold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-105 active:scale-95"
               >
-                <Download className="mr-2 h-4 w-4" />
-                Download VCF
-              </Button>
-            ) : (
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => setHelpOpen((o) => !o)}
-                className="border-primary/40 text-primary hover:bg-primary/10"
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Contact Admin
-              </Button>
-            )}
-          </div>
-
-          {/* Locked download notice */}
-          {!isFull && (
-            <Card className="border-border/60 bg-card/60 p-4 text-center backdrop-blur">
-              <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <Lock className="h-4 w-4" />
-                VCF unlocks when target is reached ({remaining} to go)
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Can&apos;t wait? Tap <strong>Contact Admin</strong> and
-                we&apos;ll WhatsApp it to you.
+                <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-primary/40" />
+                <Download className="h-5 w-5" />
+                Download VCF ({total} contacts)
+              </button>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Tap the button — your file will save as{" "}
+                <strong>{campaign.slug}.vcf</strong>
               </p>
             </Card>
+          ) : (
+            <>
+              {/* Add contact form */}
+              <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
+                <form onSubmit={handleAdd} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-name">Name</Label>
+                    <Input
+                      id="contact-name"
+                      placeholder="Enter full name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      maxLength={80}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-phone">
+                      Phone Number{" "}
+                      <span className="text-xs text-muted-foreground">
+                        (must include country code, e.g. +254...)
+                      </span>
+                    </Label>
+                    <Input
+                      id="contact-phone"
+                      type="tel"
+                      placeholder="+254712345678"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      maxLength={16}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={submitting}
+                    className="w-full font-semibold text-primary-foreground"
+                    style={{ backgroundColor: "oklch(0.72 0.18 150)" }}
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    {submitting ? "Adding..." : "Add to VCF"}
+                  </Button>
+                </form>
+              </Card>
+
+              {/* Actions */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleShare}
+                  className="border-primary/40 text-primary hover:bg-primary/10"
+                >
+                  Share Link
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setHelpOpen((o) => !o)}
+                  className="border-primary/40 text-primary hover:bg-primary/10"
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Contact Admin
+                </Button>
+              </div>
+
+              {/* Locked download notice */}
+              <Card className="border-border/60 bg-card/60 p-4 text-center backdrop-blur">
+                <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Lock className="h-4 w-4" />
+                  VCF unlocks when target is reached ({remaining} to go)
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Can&apos;t wait? Tap <strong>Contact Admin</strong> and
+                  we&apos;ll WhatsApp it to you.
+                </p>
+              </Card>
+
+              {/* Contact admin form */}
+              {helpOpen && (
+                <Card className="border-primary/40 bg-card/60 p-6 backdrop-blur">
+                  <div className="mb-4 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <h2 className="text-base font-semibold">
+                      Ask admin to send you the VCF
+                    </h2>
+                  </div>
+                  <form onSubmit={sendHelp} className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="help-name">Your name</Label>
+                      <Input
+                        id="help-name"
+                        value={helpName}
+                        onChange={(e) => setHelpName(e.target.value)}
+                        maxLength={80}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="help-phone">WhatsApp number</Label>
+                      <Input
+                        id="help-phone"
+                        type="tel"
+                        placeholder="+254..."
+                        value={helpPhone}
+                        onChange={(e) => setHelpPhone(e.target.value)}
+                        maxLength={16}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="help-msg">Message (optional)</Label>
+                      <Textarea
+                        id="help-msg"
+                        rows={3}
+                        placeholder="Anything you'd like admin to know..."
+                        value={helpMsg}
+                        onChange={(e) => setHelpMsg(e.target.value)}
+                        maxLength={500}
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={helpSending}
+                      className="w-full bg-[image:var(--gradient-primary)] text-primary-foreground"
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      {helpSending ? "Sending..." : "Send to admin"}
+                    </Button>
+                  </form>
+                </Card>
+              )}
+
+              {/* Future VCF subscription */}
+              <Card className="border-border/60 bg-card/60 p-5 backdrop-blur">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-primary" />
+                    <div>
+                      <h3 className="text-sm font-semibold">
+                        Want your number in EVERY future VCF?
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Contact admin and we&apos;ll include your number in
+                        every VCF we create. We&apos;ll also WhatsApp you when
+                        each new VCF is ready.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setFeatOpen((o) => !o)}
+                    className="border-primary/40 text-primary hover:bg-primary/10"
+                  >
+                    {featOpen ? "Close" : "Notify me"}
+                  </Button>
+                </div>
+
+                {featOpen && (
+                  <form onSubmit={sendFeature} className="mt-4 space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="feat-name">Your name</Label>
+                      <Input
+                        id="feat-name"
+                        value={featName}
+                        onChange={(e) => setFeatName(e.target.value)}
+                        maxLength={80}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="feat-phone">WhatsApp number</Label>
+                      <Input
+                        id="feat-phone"
+                        type="tel"
+                        placeholder="+254..."
+                        value={featPhone}
+                        onChange={(e) => setFeatPhone(e.target.value)}
+                        maxLength={16}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="feat-msg">Message (optional)</Label>
+                      <Textarea
+                        id="feat-msg"
+                        rows={2}
+                        placeholder="Categories you're interested in, etc."
+                        value={featMsg}
+                        onChange={(e) => setFeatMsg(e.target.value)}
+                        maxLength={500}
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={featSending}
+                      className="w-full bg-[image:var(--gradient-primary)] text-primary-foreground"
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      {featSending ? "Sending..." : "Send to admin"}
+                    </Button>
+                  </form>
+                )}
+              </Card>
+            </>
           )}
 
-          {/* Contact admin form */}
-          {helpOpen && !isFull && (
-            <Card className="border-primary/40 bg-card/60 p-6 backdrop-blur">
-              <div className="mb-4 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                <h2 className="text-base font-semibold">
-                  Ask admin to send you the VCF
-                </h2>
-              </div>
-              <form onSubmit={sendHelp} className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="help-name">Your name</Label>
-                  <Input
-                    id="help-name"
-                    value={helpName}
-                    onChange={(e) => setHelpName(e.target.value)}
-                    maxLength={80}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="help-phone">WhatsApp number</Label>
-                  <Input
-                    id="help-phone"
-                    type="tel"
-                    placeholder="+254..."
-                    value={helpPhone}
-                    onChange={(e) => setHelpPhone(e.target.value)}
-                    maxLength={16}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="help-msg">Message (optional)</Label>
-                  <Textarea
-                    id="help-msg"
-                    rows={3}
-                    placeholder="Anything you'd like admin to know..."
-                    value={helpMsg}
-                    onChange={(e) => setHelpMsg(e.target.value)}
-                    maxLength={500}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={helpSending}
-                  className="w-full bg-[image:var(--gradient-primary)] text-primary-foreground"
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  {helpSending ? "Sending..." : "Send to admin"}
-                </Button>
-              </form>
-            </Card>
-          )}
 
-          {/* Future VCF subscription */}
-          <Card className="border-border/60 bg-card/60 p-5 backdrop-blur">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Bell className="h-4 w-4 text-primary" />
-              <div>
-                  <h3 className="text-sm font-semibold">
-                    Want your number in EVERY future VCF?
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Contact admin and we&apos;ll include your number in every
-                    VCF we create. We&apos;ll also WhatsApp you when each new
-                    VCF is ready.
-                  </p>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setFeatOpen((o) => !o)}
-                className="border-primary/40 text-primary hover:bg-primary/10"
-              >
-                {featOpen ? "Close" : "Notify me"}
-              </Button>
-            </div>
-
-            {featOpen && (
-              <form onSubmit={sendFeature} className="mt-4 space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="feat-name">Your name</Label>
-                  <Input
-                    id="feat-name"
-                    value={featName}
-                    onChange={(e) => setFeatName(e.target.value)}
-                    maxLength={80}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="feat-phone">WhatsApp number</Label>
-                  <Input
-                    id="feat-phone"
-                    type="tel"
-                    placeholder="+254..."
-                    value={featPhone}
-                    onChange={(e) => setFeatPhone(e.target.value)}
-                    maxLength={16}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="feat-msg">Message (optional)</Label>
-                  <Textarea
-                    id="feat-msg"
-                    rows={2}
-                    placeholder="Categories you're interested in, etc."
-                    value={featMsg}
-                    onChange={(e) => setFeatMsg(e.target.value)}
-                    maxLength={500}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={featSending}
-                  className="w-full bg-[image:var(--gradient-primary)] text-primary-foreground"
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  {featSending ? "Sending..." : "Send to admin"}
-                </Button>
-              </form>
-            )}
-          </Card>
 
           {/* Contacts list */}
           <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">

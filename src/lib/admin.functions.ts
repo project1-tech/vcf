@@ -135,6 +135,30 @@ export const adminUpdateTarget = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminUpdateWhatsappLink = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      password: z.string().min(1).max(200),
+      id: z.string().uuid(),
+      whatsapp_link: z
+        .string()
+        .trim()
+        .regex(/^https?:\/\//, "Link must start with http(s)://")
+        .max(500),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await checkPassword(data.password);
+    const { error } = await supabaseAdmin
+      .from("campaigns")
+      .update({ whatsapp_link: data.whatsapp_link })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+
+
 // ===== Announcements =====
 export const adminListAnnouncements = createServerFn({ method: "POST" })
   .inputValidator(z.object({ password: z.string().min(1).max(200) }))

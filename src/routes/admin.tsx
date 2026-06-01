@@ -21,7 +21,9 @@ import {
   adminUpdateMessage,
   adminUpdatePinned,
   adminUpdateTarget,
+  adminUpdateWhatsappLink,
 } from "@/lib/admin.functions";
+
 import { CampaignAnalytics } from "@/components/CampaignAnalytics";
 import {
   Trash2,
@@ -36,7 +38,11 @@ import {
   Inbox,
   Megaphone,
   Power,
+  Download,
+  Copy,
+  
 } from "lucide-react";
+
 
 type Campaign = {
   id: string;
@@ -94,6 +100,8 @@ function AdminPage() {
   const delContact = useServerFn(adminDeleteContact);
   const delCampaign = useServerFn(adminDeleteCampaign);
   const upTarget = useServerFn(adminUpdateTarget);
+  const upWhatsapp = useServerFn(adminUpdateWhatsappLink);
+
   const upPinned = useServerFn(adminUpdatePinned);
   const upMessage = useServerFn(adminUpdateMessage);
   const delMessage = useServerFn(adminDeleteMessage);
@@ -253,6 +261,34 @@ function AdminPage() {
     );
     toast.success("Target updated");
   };
+
+  const saveWhatsapp = async (c: Campaign, value: string) => {
+    const v = value.trim();
+    if (!/^https?:\/\//.test(v)) {
+      toast.error("Link must start with http:// or https://");
+      return;
+    }
+    try {
+      await upWhatsapp({ data: { password, id: c.id, whatsapp_link: v } });
+      setCampaigns((prev) =>
+        prev.map((x) => (x.id === c.id ? { ...x, whatsapp_link: v } : x)),
+      );
+      toast.success("WhatsApp link updated");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const copyDownloadLink = async (slug: string) => {
+    const url = `${window.location.origin}/d/${slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Download link copied");
+    } catch {
+      toast.error("Copy failed — link: " + url);
+    }
+  };
+
 
   const updatePin = (i: number, key: "name" | "phone", value: string) => {
     setPinned((prev) =>
@@ -753,7 +789,13 @@ function AdminPage() {
                             </Link>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            /v/{c.slug} · {cContacts.length} contacts
+                            /v/{c.slug} · {cContacts.length}/{c.target}{" "}
+                            contacts
+                            {cContacts.length + pinned.length >= c.target && (
+                              <span className="ml-2 rounded bg-success/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-success">
+                                Full
+                              </span>
+                            )}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -786,6 +828,44 @@ function AdminPage() {
                           </Button>
                         </div>
                       </div>
+
+                      {/* WhatsApp link editor + download link */}
+                      <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
+                        <div className="flex items-center gap-2">
+                          <Label className="shrink-0 text-xs text-muted-foreground">
+                            WA link
+                          </Label>
+                          <Input
+                            defaultValue={c.whatsapp_link}
+                            placeholder="https://chat.whatsapp.com/..."
+                            className="h-8"
+                            onBlur={(e) => {
+                              if (e.target.value.trim() !== c.whatsapp_link) {
+                                saveWhatsapp(c, e.target.value);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyDownloadLink(c.slug)}
+                            title="Copy auto-download link"
+                          >
+                            <Copy className="mr-1 h-3 w-3" /> Copy link
+                          </Button>
+                          <a
+                            href={`/d/${c.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background px-3 text-xs font-medium hover:bg-accent"
+                          >
+                            <Download className="h-3 w-3" /> Download
+                          </a>
+                        </div>
+                      </div>
+
 
                       {isOpen && (
                         <div className="mt-4 border-t border-border/60 pt-3">
