@@ -157,14 +157,7 @@ export const adminUpdateWhatsappLink = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-    await checkPassword(data.password);
-    const { error } = await supabaseAdmin
-      .from("campaigns")
-      .update({ target: data.target })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+
 
 // ===== Announcements =====
 export const adminListAnnouncements = createServerFn({ method: "POST" })
