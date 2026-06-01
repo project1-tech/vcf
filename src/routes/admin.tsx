@@ -789,7 +789,13 @@ function AdminPage() {
                             </Link>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            /v/{c.slug} · {cContacts.length} contacts
+                            /v/{c.slug} · {cContacts.length}/{c.target}{" "}
+                            contacts
+                            {cContacts.length + pinned.length >= c.target && (
+                              <span className="ml-2 rounded bg-success/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-success">
+                                Full
+                              </span>
+                            )}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -822,6 +828,44 @@ function AdminPage() {
                           </Button>
                         </div>
                       </div>
+
+                      {/* WhatsApp link editor + download link */}
+                      <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto]">
+                        <div className="flex items-center gap-2">
+                          <Label className="shrink-0 text-xs text-muted-foreground">
+                            WA link
+                          </Label>
+                          <Input
+                            defaultValue={c.whatsapp_link}
+                            placeholder="https://chat.whatsapp.com/..."
+                            className="h-8"
+                            onBlur={(e) => {
+                              if (e.target.value.trim() !== c.whatsapp_link) {
+                                saveWhatsapp(c, e.target.value);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyDownloadLink(c.slug)}
+                            title="Copy auto-download link"
+                          >
+                            <Copy className="mr-1 h-3 w-3" /> Copy link
+                          </Button>
+                          <a
+                            href={`/d/${c.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background px-3 text-xs font-medium hover:bg-accent"
+                          >
+                            <Download className="h-3 w-3" /> Download
+                          </a>
+                        </div>
+                      </div>
+
 
                       {isOpen && (
                         <div className="mt-4 border-t border-border/60 pt-3">
