@@ -18,11 +18,13 @@ import {
   adminListData,
   adminLogin,
   adminUpdateAnnouncement,
+  adminUpdateDownloadExpiry,
   adminUpdateMessage,
   adminUpdatePinned,
   adminUpdateTarget,
   adminUpdateWhatsappLink,
 } from "@/lib/admin.functions";
+
 
 import { CampaignAnalytics } from "@/components/CampaignAnalytics";
 import {
@@ -51,7 +53,9 @@ type Campaign = {
   description: string | null;
   whatsapp_link: string;
   target: number;
+  download_expires_at: string | null;
 };
+
 type Contact = {
   id: string;
   campaign_id: string;
@@ -101,6 +105,8 @@ function AdminPage() {
   const delCampaign = useServerFn(adminDeleteCampaign);
   const upTarget = useServerFn(adminUpdateTarget);
   const upWhatsapp = useServerFn(adminUpdateWhatsappLink);
+  const upDownloadExpiry = useServerFn(adminUpdateDownloadExpiry);
+
 
   const upPinned = useServerFn(adminUpdatePinned);
   const upMessage = useServerFn(adminUpdateMessage);
@@ -288,6 +294,26 @@ function AdminPage() {
       toast.error("Copy failed — link: " + url);
     }
   };
+
+  const saveDownloadExpiry = async (c: Campaign, value: string) => {
+    // value is from a datetime-local input (or "" to clear)
+    const iso = value ? new Date(value).toISOString() : null;
+    try {
+      await upDownloadExpiry({
+        data: { password, id: c.id, download_expires_at: iso },
+      });
+      setCampaigns((prev) =>
+        prev.map((x) =>
+          x.id === c.id ? { ...x, download_expires_at: iso } : x,
+        ),
+      );
+      toast.success(iso ? "Expiry updated" : "Expiry cleared");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+
 
 
   const updatePin = (i: number, key: "name" | "phone", value: string) => {
@@ -865,6 +891,53 @@ function AdminPage() {
                           </a>
                         </div>
                       </div>
+
+                      {/* Download link expiry */}
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Label className="shrink-0 text-xs text-muted-foreground">
+                          Download link expires
+                        </Label>
+                        <Input
+                          type="datetime-local"
+                          defaultValue={
+                            c.download_expires_at
+                              ? new Date(c.download_expires_at)
+                                  .toISOString()
+                                  .slice(0, 16)
+                              : ""
+                          }
+                          className="h-8 w-auto"
+                          onBlur={(e) => saveDownloadExpiry(c, e.target.value)}
+                        />
+                        {c.download_expires_at && (
+                          <>
+                            <span
+                              className={`text-[11px] ${
+                                new Date(c.download_expires_at) <= new Date()
+                                  ? "text-destructive"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {new Date(c.download_expires_at) <= new Date()
+                                ? "Expired"
+                                : `until ${new Date(c.download_expires_at).toLocaleString()}`}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => saveDownloadExpiry(c, "")}
+                            >
+                              Clear
+                            </Button>
+                          </>
+                        )}
+                        {!c.download_expires_at && (
+                          <span className="text-[11px] text-muted-foreground">
+                            No expiry (always available)
+                          </span>
+                        )}
+                      </div>
+
 
 
                       {isOpen && (

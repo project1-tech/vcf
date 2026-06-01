@@ -157,6 +157,25 @@ export const adminUpdateWhatsappLink = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminUpdateDownloadExpiry = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      password: z.string().min(1).max(200),
+      id: z.string().uuid(),
+      download_expires_at: z.string().datetime().nullable(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await checkPassword(data.password);
+    const { error } = await supabaseAdmin
+      .from("campaigns")
+      .update({ download_expires_at: data.download_expires_at })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+
 
 
 // ===== Announcements =====
