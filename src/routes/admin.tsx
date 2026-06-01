@@ -892,6 +892,53 @@ function AdminPage() {
                         </div>
                       </div>
 
+                      {/* Download link expiry */}
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Label className="shrink-0 text-xs text-muted-foreground">
+                          Download link expires
+                        </Label>
+                        <Input
+                          type="datetime-local"
+                          defaultValue={
+                            c.download_expires_at
+                              ? new Date(c.download_expires_at)
+                                  .toISOString()
+                                  .slice(0, 16)
+                              : ""
+                          }
+                          className="h-8 w-auto"
+                          onBlur={(e) => saveDownloadExpiry(c, e.target.value)}
+                        />
+                        {c.download_expires_at && (
+                          <>
+                            <span
+                              className={`text-[11px] ${
+                                new Date(c.download_expires_at) <= new Date()
+                                  ? "text-destructive"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {new Date(c.download_expires_at) <= new Date()
+                                ? "Expired"
+                                : `until ${new Date(c.download_expires_at).toLocaleString()}`}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => saveDownloadExpiry(c, "")}
+                            >
+                              Clear
+                            </Button>
+                          </>
+                        )}
+                        {!c.download_expires_at && (
+                          <span className="text-[11px] text-muted-foreground">
+                            No expiry (always available)
+                          </span>
+                        )}
+                      </div>
+
+
 
                       {isOpen && (
                         <div className="mt-4 border-t border-border/60 pt-3">
