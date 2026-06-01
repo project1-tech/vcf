@@ -101,7 +101,8 @@ export const Route = createFileRoute("/v/$slug")({
 });
 
 function CampaignPage() {
-  const { campaign } = Route.useLoaderData();
+  const { campaign: initialCampaign } = Route.useLoaderData();
+  const [campaign, setCampaign] = useState<Campaign>(initialCampaign);
   const submitContactFn = useServerFn(submitContact);
   const submitMessageFn = useServerFn(submitAdminMessage);
   const recordView = useServerFn(recordPageView);
@@ -147,7 +148,7 @@ function CampaignPage() {
     // Fire-and-forget page view (unique per IP/day server-side)
     recordView({ data: { campaign_id: campaign.id } }).catch(() => {});
     const channel = supabase
-      .channel(`contacts-${campaign.id}`)
+      .channel(`campaign-${campaign.id}`)
       .on(
         "postgres_changes",
         {
@@ -158,12 +159,26 @@ function CampaignPage() {
         },
         () => loadContacts(),
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "campaigns",
+          filter: `id=eq.${campaign.id}`,
+        },
+        (payload) => {
+          const next = payload.new as Partial<Campaign>;
+          setCampaign((prev) => ({ ...prev, ...next }));
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaign.id]);
+
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
