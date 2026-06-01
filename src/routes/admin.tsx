@@ -105,6 +105,8 @@ function AdminPage() {
   const delCampaign = useServerFn(adminDeleteCampaign);
   const upTarget = useServerFn(adminUpdateTarget);
   const upWhatsapp = useServerFn(adminUpdateWhatsappLink);
+  const upDownloadExpiry = useServerFn(adminUpdateDownloadExpiry);
+
 
   const upPinned = useServerFn(adminUpdatePinned);
   const upMessage = useServerFn(adminUpdateMessage);
