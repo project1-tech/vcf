@@ -127,6 +127,13 @@
     border-color: var(--color-border);
   }
 
+  /* Hide Lovable badge */
+  #lovable-badge,
+  [id^="lovable-badge"],
+  a[href*="lovable.dev"][target="_blank"] {
+    display: none !important;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
