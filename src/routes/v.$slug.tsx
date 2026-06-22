@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
   Download,
   ExternalLink,
   Heart,
+  LogIn,
   Lock,
   MessageSquare,
   Phone,
@@ -102,6 +103,7 @@ export const Route = createFileRoute("/v/$slug")({
 
 function CampaignPage() {
   const { campaign: initialCampaign } = Route.useLoaderData();
+  const navigate = useNavigate();
   const [campaign, setCampaign] = useState<Campaign>(initialCampaign);
   const submitContactFn = useServerFn(submitContact);
   const submitMessageFn = useServerFn(submitAdminMessage);
@@ -113,6 +115,12 @@ function CampaignPage() {
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [joined, setJoined] = useState(false);
+
+  // Logged-in user (required for contact admin / notify-me)
+  const [authUser, setAuthUser] = useState<{
+    id: string;
+    username: string;
+  } | null>(null);
 
   // Contact admin (download help)
   const [helpOpen, setHelpOpen] = useState(false);
@@ -127,6 +135,42 @@ function CampaignPage() {
   const [featPhone, setFeatPhone] = useState("");
   const [featMsg, setFeatMsg] = useState("");
   const [featSending, setFeatSending] = useState(false);
+
+  // Load current user on mount + on auth change
+  useEffect(() => {
+    let mounted = true;
+    const loadUser = async (uid: string | undefined) => {
+      if (!uid) {
+        if (mounted) setAuthUser(null);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .eq("id", uid)
+        .maybeSingle();
+      if (!mounted) return;
+      const username = profile?.username ?? "user";
+      setAuthUser({ id: uid, username });
+      setHelpName((n) => n || username);
+      setFeatName((n) => n || username);
+    };
+    supabase.auth.getSession().then(({ data }) => loadUser(data.session?.user.id));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      loadUser(session?.user.id);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const requireAuthThen = (cb: () => void) => {
+    if (authUser) return cb();
+    toast.info("Create a free account to contact admin");
+    const next = typeof window !== "undefined" ? window.location.pathname : "/";
+    navigate({ to: "/dashboard", search: { next } });
+  };
 
   const loadContacts = async () => {
     const { data } = await supabase
@@ -288,7 +332,10 @@ function CampaignPage() {
       setHelpPhone("");
       setHelpMsg("");
       setHelpOpen(false);
-      toast.success("Message sent — admin will WhatsApp you the VCF.");
+      toast.success(
+        "Message sent! Admin will reply within 24hrs — check your dashboard.",
+        { duration: 6000 },
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send");
     } finally {
@@ -321,7 +368,10 @@ function CampaignPage() {
       setFeatPhone("");
       setFeatMsg("");
       setFeatOpen(false);
-      toast.success("Got it! Admin will reach out on WhatsApp.");
+      toast.success(
+        "Subscribed! Admin will reply within 24hrs — check your dashboard.",
+        { duration: 6000 },
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send");
     } finally {
@@ -455,7 +505,7 @@ function CampaignPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{p.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {p.phone}
+                        {maskPhone(p.phone)}
                       </div>
                     </div>
                   </li>
@@ -546,11 +596,17 @@ function CampaignPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => setHelpOpen((o) => !o)}
+                  onClick={() =>
+                    requireAuthThen(() => setHelpOpen((o) => !o))
+                  }
                   className="border-primary/40 text-primary hover:bg-primary/10"
                 >
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Contact Admin
+                  {authUser ? (
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                  ) : (
+                    <LogIn className="mr-2 h-4 w-4" />
+                  )}
+                  {authUser ? "Contact Admin" : "Sign in to contact admin"}
                 </Button>
               </div>
 
@@ -638,10 +694,12 @@ function CampaignPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setFeatOpen((o) => !o)}
+                    onClick={() =>
+                      requireAuthThen(() => setFeatOpen((o) => !o))
+                    }
                     className="border-primary/40 text-primary hover:bg-primary/10"
                   >
-                    {featOpen ? "Close" : "Notify me"}
+                    {!authUser ? "Sign in" : featOpen ? "Close" : "Notify me"}
                   </Button>
                 </div>
 
