@@ -1,7 +1,6 @@
 import {
   createFileRoute,
   Link,
-  useNavigate,
   useRouter,
 } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -69,7 +68,6 @@ type UserMsg = {
 
 function DashboardPage() {
   const search = Route.useSearch();
-  const navigate = useNavigate();
   const router = useRouter();
 
   const [sessionLoaded, setSessionLoaded] = useState(false);
