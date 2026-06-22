@@ -9,11 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VSlugRouteImport } from './routes/v.$slug'
 import { Route as DSlugRouteImport } from './routes/d.$slug'
+import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
+import { Route as AdminAccessRouteImport } from './routes/admin.access'
 
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -34,43 +42,92 @@ const DSlugRoute = DSlugRouteImport.update({
   path: '/d/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminMessagesRoute = AdminMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAccessRoute = AdminAccessRouteImport.update({
+  id: '/access',
+  path: '/access',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/dashboard': typeof DashboardRoute
+  '/admin/access': typeof AdminAccessRoute
+  '/admin/messages': typeof AdminMessagesRoute
   '/d/$slug': typeof DSlugRoute
   '/v/$slug': typeof VSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/dashboard': typeof DashboardRoute
+  '/admin/access': typeof AdminAccessRoute
+  '/admin/messages': typeof AdminMessagesRoute
   '/d/$slug': typeof DSlugRoute
   '/v/$slug': typeof VSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/dashboard': typeof DashboardRoute
+  '/admin/access': typeof AdminAccessRoute
+  '/admin/messages': typeof AdminMessagesRoute
   '/d/$slug': typeof DSlugRoute
   '/v/$slug': typeof VSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/d/$slug' | '/v/$slug'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/dashboard'
+    | '/admin/access'
+    | '/admin/messages'
+    | '/d/$slug'
+    | '/v/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/d/$slug' | '/v/$slug'
-  id: '__root__' | '/' | '/admin' | '/d/$slug' | '/v/$slug'
+  to:
+    | '/'
+    | '/admin'
+    | '/dashboard'
+    | '/admin/access'
+    | '/admin/messages'
+    | '/d/$slug'
+    | '/v/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/dashboard'
+    | '/admin/access'
+    | '/admin/messages'
+    | '/d/$slug'
+    | '/v/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  DashboardRoute: typeof DashboardRoute
   DSlugRoute: typeof DSlugRoute
   VSlugRoute: typeof VSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -99,12 +156,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/messages': {
+      id: '/admin/messages'
+      path: '/messages'
+      fullPath: '/admin/messages'
+      preLoaderRoute: typeof AdminMessagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/access': {
+      id: '/admin/access'
+      path: '/access'
+      fullPath: '/admin/access'
+      preLoaderRoute: typeof AdminAccessRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminAccessRoute: typeof AdminAccessRoute
+  AdminMessagesRoute: typeof AdminMessagesRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAccessRoute: AdminAccessRoute,
+  AdminMessagesRoute: AdminMessagesRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
+  DashboardRoute: DashboardRoute,
   DSlugRoute: DSlugRoute,
   VSlugRoute: VSlugRoute,
 }
