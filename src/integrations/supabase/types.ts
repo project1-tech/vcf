@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       admin_messages: {
         Row: {
+          admin_reply: string | null
           campaign_id: string | null
           created_at: string
           handled: boolean
@@ -24,8 +25,12 @@ export type Database = {
           message: string
           name: string
           phone: string
+          read_by_user_at: string | null
+          replied_at: string | null
+          user_id: string | null
         }
         Insert: {
+          admin_reply?: string | null
           campaign_id?: string | null
           created_at?: string
           handled?: boolean
@@ -34,8 +39,12 @@ export type Database = {
           message?: string
           name: string
           phone: string
+          read_by_user_at?: string | null
+          replied_at?: string | null
+          user_id?: string | null
         }
         Update: {
+          admin_reply?: string | null
           campaign_id?: string | null
           created_at?: string
           handled?: boolean
@@ -44,6 +53,9 @@ export type Database = {
           message?: string
           name?: string
           phone?: string
+          read_by_user_at?: string | null
+          replied_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -212,16 +224,83 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      sub_admins: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          permissions: string[]
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          permissions?: string[]
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          permissions?: string[]
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      create_sub_admin: {
+        Args: { _password: string; _permissions: string[]; _username: string }
+        Returns: string
+      }
       get_campaign_analytics: {
         Args: { _campaign_id: string; _days?: number }
         Returns: Json
       }
       get_pinned_contacts: { Args: never; Returns: Json }
+      update_sub_admin: {
+        Args: { _id: string; _password: string; _permissions: string[] }
+        Returns: undefined
+      }
+      verify_sub_admin: {
+        Args: { _password: string; _username: string }
+        Returns: {
+          id: string
+          permissions: string[]
+          username: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
