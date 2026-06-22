@@ -103,6 +103,7 @@ export const Route = createFileRoute("/v/$slug")({
 
 function CampaignPage() {
   const { campaign: initialCampaign } = Route.useLoaderData();
+  const navigate = useNavigate();
   const [campaign, setCampaign] = useState<Campaign>(initialCampaign);
   const submitContactFn = useServerFn(submitContact);
   const submitMessageFn = useServerFn(submitAdminMessage);
@@ -114,6 +115,12 @@ function CampaignPage() {
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [joined, setJoined] = useState(false);
+
+  // Logged-in user (required for contact admin / notify-me)
+  const [authUser, setAuthUser] = useState<{
+    id: string;
+    username: string;
+  } | null>(null);
 
   // Contact admin (download help)
   const [helpOpen, setHelpOpen] = useState(false);
@@ -128,6 +135,42 @@ function CampaignPage() {
   const [featPhone, setFeatPhone] = useState("");
   const [featMsg, setFeatMsg] = useState("");
   const [featSending, setFeatSending] = useState(false);
+
+  // Load current user on mount + on auth change
+  useEffect(() => {
+    let mounted = true;
+    const loadUser = async (uid: string | undefined) => {
+      if (!uid) {
+        if (mounted) setAuthUser(null);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .eq("id", uid)
+        .maybeSingle();
+      if (!mounted) return;
+      const username = profile?.username ?? "user";
+      setAuthUser({ id: uid, username });
+      setHelpName((n) => n || username);
+      setFeatName((n) => n || username);
+    };
+    supabase.auth.getSession().then(({ data }) => loadUser(data.session?.user.id));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      loadUser(session?.user.id);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const requireAuthThen = (cb: () => void) => {
+    if (authUser) return cb();
+    toast.info("Create a free account to contact admin");
+    const next = typeof window !== "undefined" ? window.location.pathname : "/";
+    navigate({ to: "/dashboard", search: { next } });
+  };
 
   const loadContacts = async () => {
     const { data } = await supabase
