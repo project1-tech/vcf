@@ -66,6 +66,14 @@ function HomePage() {
       <Toaster theme="light" position="top-center" />
       <div className="min-h-screen px-4 py-10">
         <div className="mx-auto max-w-2xl">
+          <div className="mb-2 flex justify-end">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/40 px-3 py-1 text-xs text-muted-foreground backdrop-blur hover:text-primary"
+            >
+              My account →
+            </Link>
+          </div>
           <header className="mb-10 text-center">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/40 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
               <Sparkles className="h-3 w-3 text-primary" />
