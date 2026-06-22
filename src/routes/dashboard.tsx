@@ -236,7 +236,7 @@ function DashboardPage() {
       toast.success("Account created — you're signed in.");
       // After auth state fires, redirect if needed
       if (search.next) {
-        setTimeout(() => navigate({ to: search.next as never }), 400);
+        setTimeout(() => { window.location.href = search.next!; }, 400);
       }
     } catch (e) {
       toast.error((e as Error).message);
@@ -260,7 +260,7 @@ function DashboardPage() {
       if (error) throw error;
       toast.success("Welcome back!");
       if (search.next) {
-        setTimeout(() => navigate({ to: search.next as never }), 400);
+        setTimeout(() => { window.location.href = search.next!; }, 400);
       }
     } catch (e) {
       toast.error((e as Error).message);
@@ -454,7 +454,7 @@ function DashboardPage() {
               <button
                 type="button"
                 className="font-semibold text-primary hover:underline"
-                onClick={() => navigate({ to: search.next as never })}
+                onClick={() => (window.location.href = search.next!)}
               >
                 Continue where you left off →
               </button>
