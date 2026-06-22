@@ -332,7 +332,10 @@ function CampaignPage() {
       setHelpPhone("");
       setHelpMsg("");
       setHelpOpen(false);
-      toast.success("Message sent — admin will WhatsApp you the VCF.");
+      toast.success(
+        "Message sent! Admin will reply within 24hrs — check your dashboard.",
+        { duration: 6000 },
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send");
     } finally {
@@ -365,7 +368,10 @@ function CampaignPage() {
       setFeatPhone("");
       setFeatMsg("");
       setFeatOpen(false);
-      toast.success("Got it! Admin will reach out on WhatsApp.");
+      toast.success(
+        "Subscribed! Admin will reply within 24hrs — check your dashboard.",
+        { duration: 6000 },
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send");
     } finally {
@@ -499,7 +505,7 @@ function CampaignPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{p.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {p.phone}
+                        {maskPhone(p.phone)}
                       </div>
                     </div>
                   </li>
@@ -590,11 +596,17 @@ function CampaignPage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => setHelpOpen((o) => !o)}
+                  onClick={() =>
+                    requireAuthThen(() => setHelpOpen((o) => !o))
+                  }
                   className="border-primary/40 text-primary hover:bg-primary/10"
                 >
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Contact Admin
+                  {authUser ? (
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                  ) : (
+                    <LogIn className="mr-2 h-4 w-4" />
+                  )}
+                  {authUser ? "Contact Admin" : "Sign in to contact admin"}
                 </Button>
               </div>
 
@@ -682,10 +694,12 @@ function CampaignPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setFeatOpen((o) => !o)}
+                    onClick={() =>
+                      requireAuthThen(() => setFeatOpen((o) => !o))
+                    }
                     className="border-primary/40 text-primary hover:bg-primary/10"
                   >
-                    {featOpen ? "Close" : "Notify me"}
+                    {!authUser ? "Sign in" : featOpen ? "Close" : "Notify me"}
                   </Button>
                 </div>
 
