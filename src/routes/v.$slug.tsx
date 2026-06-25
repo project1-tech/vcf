@@ -11,7 +11,7 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { buildVcf, downloadVcf, maskPhone, type SimpleContact } from "@/lib/vcf";
 import { submitContact } from "@/lib/contacts.functions";
-import { submitAdminMessage } from "@/lib/messages.functions";
+import { submitAdminMessage, logAdminClick } from "@/lib/messages.functions";
 import { recordPageView } from "@/lib/analytics.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -107,6 +107,7 @@ function CampaignPage() {
   const [campaign, setCampaign] = useState<Campaign>(initialCampaign);
   const submitContactFn = useServerFn(submitContact);
   const submitMessageFn = useServerFn(submitAdminMessage);
+  const logClickFn = useServerFn(logAdminClick);
   const recordView = useServerFn(recordPageView);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [pinned, setPinned] = useState<SimpleContact[]>([]);
@@ -597,7 +598,21 @@ function CampaignPage() {
                   size="lg"
                   variant="outline"
                   onClick={() =>
-                    requireAuthThen(() => setHelpOpen((o) => !o))
+                    requireAuthThen(() => {
+                      setHelpOpen((o) => {
+                        const next = !o;
+                        if (next) {
+                          logClickFn({
+                            data: {
+                              kind: "contact_admin",
+                              campaign_id: campaign.id,
+                              slug: campaign.slug,
+                            },
+                          }).catch(() => {});
+                        }
+                        return next;
+                      });
+                    })
                   }
                   className="border-primary/40 text-primary hover:bg-primary/10"
                 >
@@ -695,7 +710,21 @@ function CampaignPage() {
                     size="sm"
                     variant="outline"
                     onClick={() =>
-                      requireAuthThen(() => setFeatOpen((o) => !o))
+                      requireAuthThen(() => {
+                        setFeatOpen((o) => {
+                          const next = !o;
+                          if (next) {
+                            logClickFn({
+                              data: {
+                                kind: "notify_me",
+                                campaign_id: campaign.id,
+                                slug: campaign.slug,
+                              },
+                            }).catch(() => {});
+                          }
+                          return next;
+                        });
+                      })
                     }
                     className="border-primary/40 text-primary hover:bg-primary/10"
                   >

@@ -46,3 +46,27 @@ export const submitAdminMessage = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+// Log a "Notify me" / "Contact Admin" click for admin auditing.
+// Auth is required because the gating UI requires sign-in to even open
+// the form — we capture user_id so admins know who tapped.
+export const logAdminClick = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    z.object({
+      kind: z.enum(["contact_admin", "notify_me"]),
+      campaign_id: z.string().uuid().nullable().optional(),
+      slug: z.string().trim().max(120).nullable().optional(),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase.from("admin_click_logs").insert({
+      kind: data.kind,
+      campaign_id: data.campaign_id ?? null,
+      slug: data.slug ?? null,
+      user_id: userId,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

@@ -17,6 +17,7 @@ import {
   adminDeleteMessage,
   adminDeleteSubAdmin,
   adminListAnnouncements,
+  adminListClickLogs,
   adminListData,
   adminListSubAdmins,
   adminLogin,
@@ -40,6 +41,7 @@ import {
   Bell,
   Check,
   Inbox,
+  History,
   Megaphone,
   Power,
   Download,
@@ -135,6 +137,7 @@ function AdminPage() {
   const createSubAdminFn = useServerFn(adminCreateSubAdmin);
   const updateSubAdminFn = useServerFn(adminUpdateSubAdmin);
   const deleteSubAdminFn = useServerFn(adminDeleteSubAdmin);
+  const listClickLogsFn = useServerFn(adminListClickLogs);
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -142,6 +145,16 @@ function AdminPage() {
   const [messages, setMessages] = useState<AdminMessage[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]);
+  const [clickLogs, setClickLogs] = useState<
+    {
+      id: string;
+      kind: string;
+      slug: string | null;
+      campaign_id: string | null;
+      username: string | null;
+      created_at: string;
+    }[]
+  >([]);
   const [openCampaign, setOpenCampaign] = useState<string | null>(null);
   const [showHandled, setShowHandled] = useState(false);
 
@@ -198,6 +211,16 @@ function AdminPage() {
     try {
       const r = await listSubAdminsFn({ data: credsBase });
       setSubAdmins(r.subAdmins as SubAdmin[]);
+    } catch {
+      /* silent */
+    }
+  };
+
+  const loadClickLogs = async () => {
+    if (!can("messages")) return;
+    try {
+      const r = await listClickLogsFn({ data: { ...credsBase, limit: 100 } });
+      setClickLogs(r.logs as typeof clickLogs);
     } catch {
       /* silent */
     }

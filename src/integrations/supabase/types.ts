@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_click_logs: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          slug: string | null
+          user_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          slug?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          slug?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_click_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_messages: {
         Row: {
           admin_reply: string | null
