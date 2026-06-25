@@ -275,6 +275,7 @@ function AdminPage() {
     refresh(credsBase);
     loadAnnouncements();
     loadSubAdmins();
+    loadClickLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity]);
 
