@@ -1201,6 +1201,91 @@ function AdminPage() {
             </>
           )}
 
+          {/* Click audit log */}
+          {can("messages") && (
+            <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <History className="h-4 w-4 text-primary" />
+                  <h2 className="text-base font-semibold">
+                    Contact / Notify click log
+                  </h2>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={loadClickLogs}
+                >
+                  Refresh
+                </Button>
+              </div>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Every tap on "Contact Admin" or "Notify me" is recorded — even
+                if the visitor didn't finish the form.
+              </p>
+              {clickLogs.length === 0 ? (
+                <p className="py-6 text-center text-xs text-muted-foreground">
+                  No clicks logged yet.
+                </p>
+              ) : (
+                <div className="max-h-80 overflow-y-auto rounded border border-border/60">
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 bg-muted/80 text-left">
+                      <tr>
+                        <th className="px-3 py-2">When</th>
+                        <th className="px-3 py-2">Action</th>
+                        <th className="px-3 py-2">VCF slug</th>
+                        <th className="px-3 py-2">User</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clickLogs.map((l) => (
+                        <tr
+                          key={l.id}
+                          className="border-t border-border/40"
+                        >
+                          <td className="whitespace-nowrap px-3 py-1.5 text-muted-foreground">
+                            {new Date(l.created_at).toLocaleString()}
+                          </td>
+                          <td className="px-3 py-1.5">
+                            <span
+                              className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                                l.kind === "contact_admin"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-emerald-100 text-emerald-800"
+                              }`}
+                            >
+                              {l.kind === "contact_admin"
+                                ? "Contact"
+                                : "Notify"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-1.5">
+                            {l.slug ? (
+                              <code className="rounded bg-background px-1 py-0.5">
+                                {l.slug}
+                              </code>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-1.5">
+                            {l.username ?? (
+                              <span className="text-muted-foreground">
+                                anon
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          )}
+
+
           {/* Campaigns */}
           {can("campaigns") && (
             <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
