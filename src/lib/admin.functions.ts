@@ -424,6 +424,39 @@ export const adminDeleteMessage = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---- Click audit log ----
+export const adminListClickLogs = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ ...AuthFields, limit: z.number().int().min(1).max(500).optional() }))
+  .handler(async ({ data }) => {
+    await requireAdmin(data, "messages");
+    const limit = data.limit ?? 200;
+    const { data: rows, error } = await supabaseAdmin
+      .from("admin_click_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+
+    const userIds = Array.from(
+      new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]),
+    );
+    let profiles: { id: string; username: string }[] = [];
+    if (userIds.length > 0) {
+      const { data: pr } = await supabaseAdmin
+        .from("profiles")
+        .select("id, username")
+        .in("id", userIds);
+      profiles = pr ?? [];
+    }
+    const byId = new Map(profiles.map((p) => [p.id, p]));
+    return {
+      logs: (rows ?? []).map((r) => ({
+        ...r,
+        username: r.user_id ? (byId.get(r.user_id)?.username ?? null) : null,
+      })),
+    };
+  });
+
 // ============================================================
 //  SUB-ADMINS
 // ============================================================

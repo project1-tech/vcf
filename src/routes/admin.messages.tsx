@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { StarryBg } from "@/components/StarryBg";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
 import {
   adminListMessagesWithUsers,
   adminReplyMessage,
@@ -20,6 +21,7 @@ import {
   Check,
   ExternalLink,
   MessageSquare,
+  Radio,
   Send,
   Trash2,
   User as UserIcon,
@@ -90,9 +92,10 @@ function AdminMessagesPage() {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
-  const [filter, setFilter] = useState<"all" | "unanswered" | "answered">(
-    "unanswered",
+  const [filter, setFilter] = useState<"all" | "sent" | "replied" | "read">(
+    "sent",
   );
+  const [liveOn, setLiveOn] = useState(false);
 
   const refresh = async () => {
     try {
@@ -107,6 +110,20 @@ function AdminMessagesPage() {
 
   useEffect(() => {
     refresh();
+    // Realtime: listen for new submissions + read receipts
+    const ch = supabase
+      .channel("admin-messages-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "admin_messages" },
+        () => refresh(),
+      )
+      .subscribe((status) => {
+        setLiveOn(status === "SUBSCRIBED");
+      });
+    return () => {
+      supabase.removeChannel(ch);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -155,12 +172,20 @@ function AdminMessagesPage() {
     }
   };
 
+  const statusOf = (m: Msg): "sent" | "replied" | "read" => {
+    if (!m.admin_reply) return "sent";
+    if (m.read_by_user_at) return "read";
+    return "replied";
+  };
+
+  const counts = useMemo(() => {
+    const c = { sent: 0, replied: 0, read: 0 };
+    for (const m of messages) c[statusOf(m)]++;
+    return c;
+  }, [messages]);
+
   const filtered = messages.filter((m) =>
-    filter === "all"
-      ? true
-      : filter === "answered"
-        ? !!m.admin_reply
-        : !m.admin_reply,
+    filter === "all" ? true : statusOf(m) === filter,
   );
 
   const waLink = (phone: string, body: string) => {
@@ -191,25 +216,46 @@ function AdminMessagesPage() {
             </Link>
           </header>
 
-          <div className="flex items-center gap-2 text-xs">
-            {(["unanswered", "answered", "all"] as const).map((f) => (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {(
+              [
+                { key: "sent", label: `Sent (${counts.sent})` },
+                { key: "replied", label: `Replied (${counts.replied})` },
+                { key: "read", label: `Read (${counts.read})` },
+                { key: "all", label: `All (${messages.length})` },
+              ] as const
+            ).map((f) => (
               <button
-                key={f}
+                key={f.key}
                 type="button"
-                onClick={() => setFilter(f)}
-                className={`rounded-md px-3 py-1.5 font-medium capitalize ${
-                  filter === f
+                onClick={() => setFilter(f.key)}
+                className={`rounded-md px-3 py-1.5 font-medium ${
+                  filter === f.key
                     ? "bg-primary text-primary-foreground"
                     : "bg-background/50 text-muted-foreground hover:bg-accent"
                 }`}
               >
-                {f}
+                {f.label}
               </button>
             ))}
-            <span className="ml-auto text-muted-foreground">
-              {filtered.length} message{filtered.length === 1 ? "" : "s"}
+            <span
+              className={`ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 ${
+                liveOn
+                  ? "bg-success/10 text-success"
+                  : "bg-muted text-muted-foreground"
+              }`}
+              title={liveOn ? "Realtime connected" : "Realtime offline"}
+            >
+              <Radio
+                className={`h-3 w-3 ${liveOn ? "animate-pulse" : ""}`}
+              />
+              {liveOn ? "Live" : "Offline"}
+            </span>
+            <span className="text-muted-foreground">
+              {filtered.length} shown
             </span>
           </div>
+
 
           {loading ? (
             <p className="py-12 text-center text-sm text-muted-foreground">
@@ -251,6 +297,22 @@ function AdminMessagesPage() {
                               ? "VCF request"
                               : "Notify me"}
                           </span>
+                          {(() => {
+                            const s = statusOf(m);
+                            const cls =
+                              s === "sent"
+                                ? "bg-amber-100 text-amber-800"
+                                : s === "replied"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-emerald-100 text-emerald-800";
+                            return (
+                              <span
+                                className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${cls}`}
+                              >
+                                {s}
+                              </span>
+                            );
+                          })()}
                           <span className="text-xs text-muted-foreground">
                             {new Date(m.created_at).toLocaleString()}
                           </span>
@@ -359,7 +421,7 @@ function AdminMessagesPage() {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            disabled={sending || !m.profile}
+                            disabled={sending}
                             onClick={() => handleReply(m.id)}
                             className="bg-[image:var(--gradient-primary)] text-primary-foreground"
                           >
@@ -387,11 +449,9 @@ function AdminMessagesPage() {
                             setReplyTo(m.id);
                             setReplyText("");
                           }}
-                          disabled={!m.profile}
                         >
                           <MessageSquare className="mr-2 h-3 w-3" />
-                          {m.admin_reply ? "Replied" : "Reply"}
-                          {!m.profile && " (no account)"}
+                          {m.admin_reply ? "Edit reply" : "Reply"}
                         </Button>
                       </div>
                     )}
